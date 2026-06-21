@@ -545,7 +545,7 @@ function setupDesktopEvents() {
     if (!controls.isLocked) return;
     raycaster.setFromCamera(pointer, camera);
     const intersects = raycaster.intersectObjects(paintingMeshes);
-    if (intersects.length > 0 && intersects[0].distance < 6) {
+    if (intersects.length > 0 && intersects[0].distance < 15) {
       const artwork = intersects[0].object.userData.artwork;
       if (artwork) showArtworkPanel(artwork);
     }
@@ -675,7 +675,7 @@ function setupMobileEvents() {
       const ny = -(t.clientY / window.innerHeight) * 2 + 1;
       raycaster.setFromCamera(new THREE.Vector2(nx, ny), camera);
       const intersects = raycaster.intersectObjects(paintingMeshes);
-      if (intersects.length > 0 && intersects[0].distance < 6) {
+      if (intersects.length > 0 && intersects[0].distance < 15) {
         const artwork = intersects[0].object.userData.artwork;
         if (artwork) {
           mobileActive = false;

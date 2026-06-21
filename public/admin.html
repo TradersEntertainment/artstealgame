@@ -296,6 +296,7 @@
         <input type="hidden" id="artwork-id" />
 
         <!-- Image Upload -->
+        <label>Ana Görsel <span class="required">*</span></label>
         <div class="upload-area" id="upload-area">
           <div class="upload-placeholder" id="upload-placeholder">
             <svg viewBox="0 0 48 48" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -317,6 +318,35 @@
             </button>
           </div>
           <input type="file" id="image-input" accept="image/png,image/jpeg,image/webp" hidden />
+        </div>
+
+        <div class="secondary-uploads">
+          <div class="secondary-upload-group">
+            <label>Ek Görsel 1 (İsteğe Bağlı)</label>
+            <div class="upload-area small-upload" id="upload-area-2">
+              <div class="upload-placeholder" id="upload-placeholder-2">
+                <span style="font-size: 1.5rem;">+</span>
+              </div>
+              <div class="upload-preview hidden" id="upload-preview-2">
+                <img id="preview-img-2" alt="Önizleme" />
+                <button type="button" class="remove-image" id="remove-image-2" aria-label="Kaldır">✕</button>
+              </div>
+              <input type="file" id="image-input-2" accept="image/png,image/jpeg,image/webp" hidden />
+            </div>
+          </div>
+          <div class="secondary-upload-group">
+            <label>Ek Görsel 2 (İsteğe Bağlı)</label>
+            <div class="upload-area small-upload" id="upload-area-3">
+              <div class="upload-placeholder" id="upload-placeholder-3">
+                <span style="font-size: 1.5rem;">+</span>
+              </div>
+              <div class="upload-preview hidden" id="upload-preview-3">
+                <img id="preview-img-3" alt="Önizleme" />
+                <button type="button" class="remove-image" id="remove-image-3" aria-label="Kaldır">✕</button>
+              </div>
+              <input type="file" id="image-input-3" accept="image/png,image/jpeg,image/webp" hidden />
+            </div>
+          </div>
         </div>
 
         <!-- Form Fields -->

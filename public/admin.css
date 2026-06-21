@@ -640,6 +640,7 @@ body {
   border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all var(--transition);
+  margin-top: 6px;
   margin-bottom: 24px;
   overflow: hidden;
 }
@@ -655,9 +656,30 @@ body {
   color: var(--text-dim);
 }
 .upload-placeholder svg {
-  color: var(--border-light);
+  color: var(--text-dim);
   margin-bottom: 12px;
 }
+
+.secondary-uploads {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.secondary-upload-group {
+  flex: 1;
+}
+.small-upload {
+  margin-bottom: 0;
+  height: 120px;
+}
+.small-upload .upload-placeholder {
+  padding: 0;
+}
+.small-upload .remove-image {
+  width: 24px;
+  height: 24px;
+}
+
 .upload-placeholder p {
   font-size: 0.95rem;
   color: var(--text-muted);

@@ -241,9 +241,10 @@ app.get('/api/artworks/:id', (req, res) => {
 });
 
 // Create artwork (admin)
-app.post('/api/artworks', authMiddleware, upload.single('image'), (req, res) => {
+app.post('/api/artworks', authMiddleware, submissionUpload, (req, res) => {
   try {
     const artworks = readArtworks();
+    const files = req.files || {};
     const newArtwork = {
       id: getNextId(artworks),
       title: req.body.title || 'İsimsiz Eser',
@@ -253,7 +254,9 @@ app.post('/api/artworks', authMiddleware, upload.single('image'), (req, res) => 
       techniqueLabel: req.body.techniqueLabel || 'Yağlı Boya',
       dimensions: req.body.dimensions || '',
       year: req.body.year || new Date().getFullYear().toString(),
-      image: req.file ? `images/${req.file.filename}` : 'images/placeholder.png',
+      image: files.image?.[0] ? `images/${files.image[0].filename}` : 'images/placeholder.png',
+      image2: files.image2?.[0] ? `images/${files.image2[0].filename}` : '',
+      image3: files.image3?.[0] ? `images/${files.image3[0].filename}` : '',
       description: req.body.description || '',
     };
     artworks.push(newArtwork);
@@ -265,13 +268,14 @@ app.post('/api/artworks', authMiddleware, upload.single('image'), (req, res) => 
 });
 
 // Update artwork (admin)
-app.put('/api/artworks/:id', authMiddleware, upload.single('image'), (req, res) => {
+app.put('/api/artworks/:id', authMiddleware, submissionUpload, (req, res) => {
   try {
     const artworks = readArtworks();
     const index = artworks.findIndex((a) => a.id === parseInt(req.params.id));
     if (index === -1) return res.status(404).json({ error: 'Eser bulunamadı' });
 
     const existing = artworks[index];
+    const files = req.files || {};
 
     artworks[index] = {
       ...existing,
@@ -283,13 +287,16 @@ app.put('/api/artworks/:id', authMiddleware, upload.single('image'), (req, res) 
       dimensions: req.body.dimensions || existing.dimensions,
       year: req.body.year || existing.year,
       description: req.body.description || existing.description,
-      image: req.file ? `images/${req.file.filename}` : existing.image,
     };
+
+    if (files.image?.[0]) artworks[index].image = `images/${files.image[0].filename}`;
+    if (files.image2?.[0]) artworks[index].image2 = `images/${files.image2[0].filename}`;
+    if (files.image3?.[0]) artworks[index].image3 = `images/${files.image3[0].filename}`;
 
     writeArtworks(artworks);
     res.json(artworks[index]);
   } catch (err) {
-    res.status(500).json({ error: 'Güncelleme hatası: ' + err.message });
+    res.status(500).json({ error: 'Güncellenirken hata oluştu: ' + err.message });
   }
 });
 

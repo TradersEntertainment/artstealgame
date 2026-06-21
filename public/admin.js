@@ -18,6 +18,8 @@
   // ── State ──
   let artworks = [];
   let selectedFile = null;
+  let selectedFile2 = null;
+  let selectedFile3 = null;
   let editingId = null;
   let deletingId = null;
 
@@ -312,6 +314,8 @@
     artworkForm.reset();
     artworkIdInput.value = '';
     resetUpload();
+    resetSecondaryUpload(2);
+    resetSecondaryUpload(3);
     openModal();
   }
 
@@ -344,6 +348,23 @@
     }
     selectedFile = null;
 
+    // Show secondary images
+    if (art.image2) {
+      $('#preview-img-2').src = art.image2;
+      $('#upload-placeholder-2').classList.add('hidden');
+      $('#upload-preview-2').classList.remove('hidden');
+    } else {
+      resetSecondaryUpload(2);
+    }
+    
+    if (art.image3) {
+      $('#preview-img-3').src = art.image3;
+      $('#upload-placeholder-3').classList.add('hidden');
+      $('#upload-preview-3').classList.remove('hidden');
+    } else {
+      resetSecondaryUpload(3);
+    }
+
     openModal();
   }
 
@@ -359,6 +380,11 @@
     document.body.style.overflow = '';
     editingId = null;
     selectedFile = null;
+    selectedFile2 = null;
+    selectedFile3 = null;
+    resetUpload();
+    resetSecondaryUpload(2);
+    resetSecondaryUpload(3);
   }
 
   modalClose.addEventListener('click', closeModal);
@@ -441,6 +467,57 @@
     uploadPreview.classList.add('hidden');
   }
 
+  // Secondary Uploads setup
+  function setupSecondaryUpload(index) {
+    const area = $(`#upload-area-${index}`);
+    const input = $(`#image-input-${index}`);
+    const preview = $(`#upload-preview-${index}`);
+    const placeholder = $(`#upload-placeholder-${index}`);
+    const img = $(`#preview-img-${index}`);
+    const removeBtn = $(`#remove-image-${index}`);
+
+    area.addEventListener('click', (e) => {
+      if (e.target.closest('.remove-image')) return;
+      input.click();
+    });
+
+    input.addEventListener('change', () => {
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (index === 2) selectedFile2 = file;
+        if (index === 3) selectedFile3 = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          img.src = e.target.result;
+          placeholder.classList.add('hidden');
+          preview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    removeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetSecondaryUpload(index);
+    });
+  }
+
+  function resetSecondaryUpload(index) {
+    if (index === 2) selectedFile2 = null;
+    if (index === 3) selectedFile3 = null;
+    const input = $(`#image-input-${index}`);
+    const preview = $(`#upload-preview-${index}`);
+    const placeholder = $(`#upload-placeholder-${index}`);
+    const img = $(`#preview-img-${index}`);
+    if (input) input.value = '';
+    if (img) img.src = '';
+    if (placeholder) placeholder.classList.remove('hidden');
+    if (preview) preview.classList.add('hidden');
+  }
+
+  setupSecondaryUpload(2);
+  setupSecondaryUpload(3);
+
   // ============================================================
   //  FORM SUBMIT (CREATE / UPDATE)
   // ============================================================
@@ -457,9 +534,10 @@
     }
 
     const formData = new FormData();
-    if (selectedFile) {
-      formData.append('image', selectedFile);
-    }
+    if (selectedFile) formData.append('image', selectedFile);
+    if (selectedFile2) formData.append('image2', selectedFile2);
+    if (selectedFile3) formData.append('image3', selectedFile3);
+    
     formData.append('title',       $('#field-title').value.trim());
     formData.append('artist',      $('#field-artist').value.trim());
     formData.append('grade',       $('#field-grade').value.trim());

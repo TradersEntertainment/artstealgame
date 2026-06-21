@@ -315,26 +315,76 @@ function createRoom() {
   floor.receiveShadow = true;
   scene.add(floor);
 
-  // Massive Starry Night Ceiling (Covers the whole room)
-  const ceilGeo = new THREE.PlaneGeometry(ROOM.width, ROOM.depth);
+  // Ceiling with Massive Deep Recessed Skylight
+  const ceilMat = new THREE.MeshStandardMaterial({ color: CEILING_COLOR, roughness: 0.9 });
+  
+  // Make the hole huge (90% of the room) so it covers almost everywhere, but keeps the deep frame
+  const skyWidth = Math.max(10, ROOM.width * 0.9);
+  const skyDepth = Math.max(16, ROOM.depth * 0.9);
+
+  // 4 pieces to create a hole in the main ceiling
+  const ceilZLen = (ROOM.depth - skyDepth) / 2;
+  const ceil1 = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.width, ceilZLen), ceilMat);
+  ceil1.rotation.x = Math.PI / 2;
+  ceil1.position.set(0, ROOM.height, -ROOM.depth/2 + ceilZLen/2);
+  scene.add(ceil1);
+
+  const ceil2 = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.width, ceilZLen), ceilMat);
+  ceil2.rotation.x = Math.PI / 2;
+  ceil2.position.set(0, ROOM.height, ROOM.depth/2 - ceilZLen/2);
+  scene.add(ceil2);
+
+  const ceilXLen = (ROOM.width - skyWidth) / 2;
+  const ceil3 = new THREE.Mesh(new THREE.PlaneGeometry(ceilXLen, skyDepth), ceilMat);
+  ceil3.rotation.x = Math.PI / 2;
+  ceil3.position.set(-ROOM.width/2 + ceilXLen/2, ROOM.height, 0);
+  scene.add(ceil3);
+
+  const ceil4 = new THREE.Mesh(new THREE.PlaneGeometry(ceilXLen, skyDepth), ceilMat);
+  ceil4.rotation.x = Math.PI / 2;
+  ceil4.position.set(ROOM.width/2 - ceilXLen/2, ROOM.height, 0);
+  scene.add(ceil4);
+
+  // Recess walls (tunnel going UP to give depth)
+  const recessHeight = 3.5; // Very deep
+  const recessMat = new THREE.MeshStandardMaterial({ color: 0x050508, roughness: 1 }); 
+  
+  const rWall1 = new THREE.Mesh(new THREE.PlaneGeometry(skyWidth, recessHeight), recessMat);
+  rWall1.position.set(0, ROOM.height + recessHeight/2, -skyDepth/2);
+  scene.add(rWall1);
+
+  const rWall2 = new THREE.Mesh(new THREE.PlaneGeometry(skyWidth, recessHeight), recessMat);
+  rWall2.position.set(0, ROOM.height + recessHeight/2, skyDepth/2);
+  rWall2.rotation.y = Math.PI;
+  scene.add(rWall2);
+
+  const rWall3 = new THREE.Mesh(new THREE.PlaneGeometry(skyDepth, recessHeight), recessMat);
+  rWall3.position.set(-skyWidth/2, ROOM.height + recessHeight/2, 0);
+  rWall3.rotation.y = Math.PI/2;
+  scene.add(rWall3);
+
+  const rWall4 = new THREE.Mesh(new THREE.PlaneGeometry(skyDepth, recessHeight), recessMat);
+  rWall4.position.set(skyWidth/2, ROOM.height + recessHeight/2, 0);
+  rWall4.rotation.y = -Math.PI/2;
+  scene.add(rWall4);
+
+  // Massive Starry Night Ceiling (At the top of the deep hole)
   const skyTex = texLoader.load('images/starry_sky_ai.png');
   skyTex.colorSpace = THREE.SRGBColorSpace;
-  
-  // Use MirroredRepeat to perfectly stitch the edges without 'copy-paste' sharp seams
-  // This creates a massive, continuously flowing Van Gogh sky.
   skyTex.wrapS = THREE.MirroredRepeatWrapping;
   skyTex.wrapT = THREE.MirroredRepeatWrapping;
   skyTex.repeat.set(2, 3);
   
-  const ceilMat = new THREE.MeshBasicMaterial({ 
+  const skyGeo = new THREE.PlaneGeometry(skyWidth, skyDepth);
+  const skyMat = new THREE.MeshBasicMaterial({ 
     map: skyTex, 
-    color: 0xffffff // full brightness
+    color: 0xffffff
   });
   
-  const ceil = new THREE.Mesh(ceilGeo, ceilMat);
-  ceil.rotation.x = Math.PI / 2;
-  ceil.position.y = ROOM.height;
-  scene.add(ceil);
+  const skylight = new THREE.Mesh(skyGeo, skyMat);
+  skylight.rotation.x = Math.PI / 2;
+  skylight.position.y = ROOM.height + recessHeight - 0.01;
+  scene.add(skylight);
 
   // Atmospheric Dust Particles
   createDust();

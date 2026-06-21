@@ -894,7 +894,10 @@ function setupMobileEvents() {
   }
 
   // Touch look (right half of screen, i.e. not joystick)
+  renderer.domElement.style.touchAction = 'none'; // Prevent native browser actions like pull-to-refresh
+  
   renderer.domElement.addEventListener('touchstart', (e) => {
+    e.preventDefault();
     if (!mobileActive) return;
     for (const t of e.changedTouches) {
       // Ignore touches on joystick area
@@ -904,9 +907,10 @@ function setupMobileEvents() {
         touchLookPrev = { x: t.clientX, y: t.clientY };
       }
     }
-  }, { passive: true });
+  }, { passive: false });
 
   renderer.domElement.addEventListener('touchmove', (e) => {
+    e.preventDefault();
     if (!mobileActive || touchLookId === null) return;
     for (const t of e.changedTouches) {
       if (t.identifier === touchLookId) {
@@ -919,7 +923,7 @@ function setupMobileEvents() {
         touchLookPrev = { x: t.clientX, y: t.clientY };
       }
     }
-  }, { passive: true });
+  }, { passive: false });
 
   const releaseLook = (e) => {
     for (const t of e.changedTouches) {

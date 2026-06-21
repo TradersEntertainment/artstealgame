@@ -771,14 +771,14 @@ function setupDesktopEvents() {
     }
   });
 
-  renderer.domElement.addEventListener('mousedown', (e) => {
-    if (e.button !== 0) return; // Only left click
+  // PC click: Use document-level 'click' which fires reliably under PointerLock
+  document.addEventListener('click', (e) => {
     if (!controls.isLocked) return;
     
-    // When pointer is locked, we always click exactly where we are looking (center of screen: 0,0)
+    // When pointer is locked, the center of the screen (0,0) is always the target
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
     const intersects = raycaster.intersectObjects(paintingMeshes);
-    if (intersects.length > 0 && intersects[0].distance < 25) {
+    if (intersects.length > 0 && intersects[0].distance < 5) {
       const artwork = intersects[0].object.userData.artwork;
       if (artwork) showArtworkPanel(artwork);
     }
@@ -1102,6 +1102,21 @@ function animate() {
       // Smoothly return to eye height
       camera.position.y += (EYE_HEIGHT - camera.position.y) * 0.1;
       bobTime = 0;
+    }
+
+    // Crosshair highlight when looking at a painting (interactive hint)
+    if (!isMobile && crosshair) {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const hits = raycaster.intersectObjects(paintingMeshes);
+      if (hits.length > 0 && hits[0].distance < 5) {
+        crosshair.style.borderColor = '#c9a96e';
+        crosshair.style.transform = 'translate(-50%, -50%) scale(1.5)';
+        crosshair.style.boxShadow = '0 0 8px rgba(201,169,110,0.6)';
+      } else {
+        crosshair.style.borderColor = 'rgba(255,255,255,0.7)';
+        crosshair.style.transform = 'translate(-50%, -50%) scale(1)';
+        crosshair.style.boxShadow = 'none';
+      }
     }
   }
 

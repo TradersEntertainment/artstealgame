@@ -437,7 +437,7 @@ function writeVisitors(v) {
 }
 
 // ─── Visitors API (admin) ───────────────────────
-app.get('/api/visitors', requireAuth, (req, res) => {
+app.get('/api/visitors', authMiddleware, (req, res) => {
   const visitors = readVisitors();
   const dateFilter = req.query.date || new Date().toISOString().split('T')[0];
   const filtered = visitors.filter((v) => v.joinedAt && v.joinedAt.startsWith(dateFilter));

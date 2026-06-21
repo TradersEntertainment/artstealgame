@@ -753,7 +753,9 @@ function setupEvents() {
   }
 
   // Close panel (shared)
-  document.getElementById('panel-close').addEventListener('click', () => {
+  const closeBtn = document.getElementById('panel-close');
+  const handleClose = (e) => {
+    if (e.type === 'touchstart') e.preventDefault(); // Çift tetiklemeyi önlemek için
     panel.classList.remove('open');
     if (isMobile) {
       mobileActive = true;
@@ -762,7 +764,9 @@ function setupEvents() {
     } else {
       controls.lock();
     }
-  });
+  };
+  closeBtn.addEventListener('click', handleClose);
+  closeBtn.addEventListener('touchstart', handleClose, { passive: false });
 
   // Resize (shared)
   window.addEventListener('resize', () => {

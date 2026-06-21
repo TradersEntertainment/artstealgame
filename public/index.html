@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Fuat Sezgin Fen Lisesi 2025-2026 Öğrenci Resim Sergisi — Fırça İzleri. Genç sanatçılarımızın özgün eserlerini keşfedin.">
+  <meta name="keywords" content="resim sergisi, sanat, okul sergisi, öğrenci eserleri, Fuat Sezgin Fen Lisesi, görsel sanatlar">
+  <meta name="author" content="Fuat Sezgin Fen Lisesi Görsel Sanatlar Bölümü">
+
+  <title>Fırça İzleri — Öğrenci Resim Sergisi 2026</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       HEADER / NAVIGATION
+       ═══════════════════════════════════════════ -->
+  <header class="site-header" id="site-header">
+    <div class="container header-inner">
+      <a href="#" class="header-logo">
+        <div class="header-logo-icon">Fİ</div>
+        <span class="header-logo-text">Fırça İzleri</span>
+      </a>
+      <nav class="header-nav" id="header-nav">
+        <a href="#hakkinda">Hakkında</a>
+        <a href="#galeri">Galeri</a>
+        <a href="#sergi-bilgileri">Sergi Bilgileri</a>
+        <a href="#iletisim">İletişim</a>
+      </nav>
+      <button class="menu-toggle" id="menu-toggle" aria-label="Menüyü aç/kapat">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       HERO SECTION
+       ═══════════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg">
+      <div class="hero-bg-line"></div>
+      <div class="hero-bg-line"></div>
+      <div class="hero-bg-line"></div>
+      <div class="hero-bg-line"></div>
+    </div>
+
+    <!-- Scattered Paintings Background — 3 Rows, Different Directions -->
+    <div class="hero-paintings-layer" aria-hidden="true">
+      <!-- Row 1: Top — scrolls LEFT, slower, larger -->
+      <div class="paintings-row paintings-row--1">
+        <div class="paintings-track track--left track--slow">
+          <div class="painting-card rot-1"><img src="images/famous_starrynight.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_istanbul.png" alt=""></div>
+          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
+          <div class="painting-card rot-2"><img src="images/artwork_abstract.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_cappadocia.png" alt=""></div>
+          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
+          <!-- duplicate for seamless loop -->
+          <div class="painting-card rot-1"><img src="images/famous_starrynight.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_istanbul.png" alt=""></div>
+          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
+          <div class="painting-card rot-2"><img src="images/artwork_abstract.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_cappadocia.png" alt=""></div>
+          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
+        </div>
+      </div>
+
+      <!-- Row 2: Middle — scrolls RIGHT, medium speed -->
+      <div class="paintings-row paintings-row--2">
+        <div class="paintings-track track--right track--medium">
+          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
+          <div class="painting-card rot-1"><img src="images/artwork_charcoal.png" alt=""></div>
+          <div class="painting-card rot-neg3"><img src="images/famous_impressionsunrise.png" alt=""></div>
+          <div class="painting-card rot-2"><img src="images/artwork_stillife.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_starrynight.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_nature.png" alt=""></div>
+          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
+          <!-- duplicate -->
+          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
+          <div class="painting-card rot-1"><img src="images/artwork_charcoal.png" alt=""></div>
+          <div class="painting-card rot-neg3"><img src="images/famous_impressionsunrise.png" alt=""></div>
+          <div class="painting-card rot-2"><img src="images/artwork_stillife.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_starrynight.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_nature.png" alt=""></div>
+          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
+        </div>
+      </div>
+
+      <!-- Row 3: Bottom — scrolls LEFT, fast, smaller -->
+      <div class="paintings-row paintings-row--3">
+        <div class="paintings-track track--left track--fast">
+          <div class="painting-card rot-2"><img src="images/artwork_architecture.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_portrait.png" alt=""></div>
+          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
+          <div class="painting-card rot-1"><img src="images/artwork_istanbul.png" alt=""></div>
+          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
+          <div class="painting-card rot-2"><img src="images/artwork_cappadocia.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_impressionsunrise.png" alt=""></div>
+          <!-- duplicate -->
+          <div class="painting-card rot-2"><img src="images/artwork_architecture.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
+          <div class="painting-card rot-3"><img src="images/artwork_portrait.png" alt=""></div>
+          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
+          <div class="painting-card rot-1"><img src="images/artwork_istanbul.png" alt=""></div>
+          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
+          <div class="painting-card rot-2"><img src="images/artwork_cappadocia.png" alt=""></div>
+          <div class="painting-card rot-neg1"><img src="images/famous_impressionsunrise.png" alt=""></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Content -->
+    <div class="hero-content">
+      <div class="hero-overline">Fuat Sezgin Fen Lisesi Sunar</div>
+      <h1 class="hero-title">Fırça <em>İzleri</em></h1>
+
+      <!-- Rotating Inspirational Quotes -->
+      <div class="hero-quote-rotator" id="hero-quote-rotator">
+        <blockquote class="hero-quote active">
+          <p>«Her çocuk bir sanatçıdır. Mesele, büyüdüğünüzde de sanatçı kalabilmektir.»</p>
+          <cite>— Pablo Picasso</cite>
+        </blockquote>
+        <blockquote class="hero-quote">
+          <p>«Sanat, görünmeyeni görünür kılmaktır.»</p>
+          <cite>— Paul Klee</cite>
+        </blockquote>
+        <blockquote class="hero-quote">
+          <p>«Renk, ruhun üzerindeki doğrudan etkisiyle tuşlara dokunan el, göz ise çekici, ruh ise bin telli piyanodur.»</p>
+          <cite>— Wassily Kandinsky</cite>
+        </blockquote>
+        <blockquote class="hero-quote">
+          <p>«Hayal gücü bilgiden daha önemlidir. Bilgi sınırlıdır, hayal gücü ise dünyayı sarar.»</p>
+          <cite>— Albert Einstein</cite>
+        </blockquote>
+        <blockquote class="hero-quote">
+          <p>«Doğada düz çizgi yoktur.»</p>
+          <cite>— Antoni Gaudí</cite>
+        </blockquote>
+      </div>
+
+      <!-- CTA Button -->
+      <a href="#galeri" class="hero-cta">
+        <span>Eserleri Keşfet</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+        </svg>
+      </a>
+
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Tarih</span>
+          <span class="hero-meta-value">15 — 22 Haziran 2026</span>
+        </div>
+        <div class="hero-meta-divider"></div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Konum</span>
+          <span class="hero-meta-value">Okul Sergi Salonu</span>
+        </div>
+        <div class="hero-meta-divider"></div>
+        <div class="hero-meta-item">
+          <span class="hero-meta-label">Eser Sayısı</span>
+          <span class="hero-meta-value">8 Eser</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-scroll-indicator">
+      <span>Keşfet</span>
+      <div class="hero-scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       ABOUT SECTION
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="hakkinda">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-image-wrapper reveal">
+          <img src="images/artwork_istanbul.png" alt="Sergi atmosferi — Gün Batımında İstanbul" loading="lazy">
+        </div>
+        <div class="about-text">
+          <div class="section-overline reveal">Sergi Hakkında</div>
+          <h3 class="reveal reveal-delay-1">
+            Her fırça darbesi bir <em>hikâye</em>,<br>
+            her eser bir <em>dünya</em> barındırır.
+          </h3>
+          <p class="reveal reveal-delay-2">
+            «Fırça İzleri» sergisi, Fuat Sezgin Fen Lisesi Görsel Sanatlar dersi öğrencilerinin
+            2025–2026 eğitim-öğretim yılı boyunca ürettikleri eserlerin bir seçkisini sunmaktadır.
+            Yağlı boya, suluboya, karakalem, akrilik ve mürekkep gibi farklı tekniklerle
+            hayat bulan bu eserler, öğrencilerimizin sanatsal gelişimini ve özgün bakış
+            açılarını yansıtmaktadır.
+          </p>
+          <p class="reveal reveal-delay-3">
+            Sergimiz, genç yeteneklerin sanat yolculuğundaki en güzel durakları
+            bir araya getirerek sanatseverlerle buluşturmayı amaçlamaktadır.
+          </p>
+          <div class="about-stats reveal reveal-delay-4">
+            <div class="about-stat">
+              <div class="about-stat-number">8</div>
+              <div class="about-stat-label">Eser</div>
+            </div>
+            <div class="about-stat">
+              <div class="about-stat-number">8</div>
+              <div class="about-stat-label">Sanatçı</div>
+            </div>
+            <div class="about-stat">
+              <div class="about-stat-number">5</div>
+              <div class="about-stat-label">Teknik</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       GALLERY SECTION
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="galeri">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-overline reveal">Koleksiyon</div>
+        <h2 class="section-title reveal reveal-delay-1">Sergi Eserleri</h2>
+        <p class="section-description reveal reveal-delay-2">
+          Her biri farklı bir hikâye anlatan eserlerimizi keşfedin.
+          Detaylı inceleme için eserlere tıklayın.
+        </p>
+      </div>
+
+      <!-- Filter Buttons -->
+      <div class="gallery-filters reveal">
+        <button class="filter-btn active" data-filter="all">Tümü</button>
+        <button class="filter-btn" data-filter="yagliboya">Yağlı Boya</button>
+        <button class="filter-btn" data-filter="suluboya">Suluboya</button>
+        <button class="filter-btn" data-filter="akrilik">Akrilik</button>
+        <button class="filter-btn" data-filter="karakalem">Karakalem</button>
+        <button class="filter-btn" data-filter="murekkep">Mürekkep</button>
+      </div>
+
+      <!-- Gallery Grid -->
+      <div class="gallery-grid" id="gallery-grid">
+        <!-- Cards are injected by JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       EXHIBITION INFO SECTION
+       ═══════════════════════════════════════════ -->
+  <section class="section" id="sergi-bilgileri">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-overline reveal">Detaylar</div>
+        <h2 class="section-title reveal reveal-delay-1">Sergi Bilgileri</h2>
+        <p class="section-description reveal reveal-delay-2">
+          Sergimizi ziyaret etmek için aşağıdaki bilgileri inceleyebilirsiniz.
+        </p>
+      </div>
+      <div class="info-cards">
+        <div class="info-card reveal">
+          <div class="info-card-icon">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <h3>Tarih & Saat</h3>
+          <p>15 — 22 Haziran 2026<br>Hafta içi 09:00 – 17:00<br>Hafta sonu 10:00 – 16:00</p>
+        </div>
+        <div class="info-card reveal reveal-delay-1">
+          <div class="info-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          </div>
+          <h3>Konum</h3>
+          <p>Fuat Sezgin Fen Lisesi<br>Sergi Salonu, B Blok Zemin Kat<br>Ücretsiz giriş</p>
+        </div>
+        <div class="info-card reveal reveal-delay-2">
+          <div class="info-card-icon">
+            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </div>
+          <h3>İletişim</h3>
+          <p>gorsel.sanatlar@fuatsezginfl.meb.gov.tr<br>Tel: (0312) 555 00 00<br>Görsel Sanatlar Zümresi</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════════ -->
+  <footer class="site-footer" id="iletisim">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div class="footer-brand-icon">Fİ</div>
+          <span class="footer-brand-text">Fırça İzleri — 2026</span>
+        </div>
+        <div class="footer-links">
+          <a href="#hero">Ana Sayfa</a>
+          <a href="#hakkinda">Hakkında</a>
+          <a href="#galeri">Galeri</a>
+          <a href="#sergi-bilgileri">Bilgiler</a>
+        </div>
+      </div>
+      <div class="footer-copyright">
+        © 2026 Fuat Sezgin Fen Lisesi Görsel Sanatlar Bölümü. Tüm hakları saklıdır.
+        <br>T.C. Millî Eğitim Bakanlığı bünyesinde faaliyet göstermektedir.
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════
+       LIGHTBOX
+       ═══════════════════════════════════════════ -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
+    <div class="lightbox-content">
+      <div class="lightbox-image-area">
+        <button class="lightbox-nav-btn lightbox-prev" id="lightbox-prev" aria-label="Önceki eser">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="lightbox-image-wrapper">
+          <img src="" alt="" id="lightbox-image">
+        </div>
+        <button class="lightbox-nav-btn lightbox-next" id="lightbox-next" aria-label="Sonraki eser">
+          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+      <div class="lightbox-detail">
+        <button class="lightbox-close" id="lightbox-close" aria-label="Kapat">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <div class="lightbox-detail-overline" id="lightbox-overline"></div>
+        <h2 class="lightbox-detail-title" id="lightbox-title"></h2>
+        <p class="lightbox-detail-artist" id="lightbox-artist"></p>
+        <div class="lightbox-detail-divider"></div>
+        <div class="lightbox-detail-specs" id="lightbox-specs"></div>
+        <div class="lightbox-detail-description">
+          <h4>Sanatçı Notu</h4>
+          <p id="lightbox-description"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

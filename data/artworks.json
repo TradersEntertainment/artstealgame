@@ -1,0 +1,98 @@
+[
+  {
+    "id": 1,
+    "title": "Gün Batımında İstanbul",
+    "artist": "Elif Yılmaz",
+    "grade": "11-A",
+    "technique": "yagliboya",
+    "techniqueLabel": "Yağlı Boya",
+    "dimensions": "60 × 80 cm",
+    "year": "2026",
+    "image": "images/artwork_istanbul.png",
+    "description": "İstanbul siluetini gün batımının sıcak tonlarıyla yeniden yorumladığım bu çalışmada, şehrin tarihî dokusunu empresyonist bir üslupla aktarmayı amaçladım. Boğaz'ın üzerindeki ışık oyunları ve camilerin gökyüzüyle buluşması, beni derinden etkileyen bir an oldu."
+  },
+  {
+    "id": 2,
+    "title": "Zamanın İzleri",
+    "artist": "Ahmet Kaya",
+    "grade": "12-B",
+    "technique": "suluboya",
+    "techniqueLabel": "Suluboya",
+    "dimensions": "42 × 56 cm",
+    "year": "2026",
+    "image": "images/artwork_portrait.png",
+    "description": "Büyükannemin yüzündeki her çizgi, yaşanmış bir hikâyenin izini taşıyor. Bu portre çalışmasında suluboyayı tercih ettim; çünkü suluboyayı kontrol etmenin zorluğu, zamanın kontrol edilemezliğiyle örtüşüyordu. Her renk geçişi, anıların birbirine karışması gibi."
+  },
+  {
+    "id": 3,
+    "title": "İç Ses",
+    "artist": "Zeynep Demir",
+    "grade": "10-C",
+    "technique": "akrilik",
+    "techniqueLabel": "Akrilik",
+    "dimensions": "70 × 100 cm",
+    "year": "2026",
+    "image": "images/artwork_abstract.png",
+    "description": "Duyguların renklere dönüştüğü bu soyut çalışmada, müziğin görsel bir dile çevrilmesini denedim. Kırmızılar tutku ve enerjiyi, maviler huzur ve derinliği, altın tonları ise umut ve ışığı temsil ediyor."
+  },
+  {
+    "id": 4,
+    "title": "Pencere Kenarında Huzur",
+    "artist": "Can Özkan",
+    "grade": "11-B",
+    "technique": "karakalem",
+    "techniqueLabel": "Karakalem",
+    "dimensions": "35 × 50 cm",
+    "year": "2026",
+    "image": "images/artwork_charcoal.png",
+    "description": "Evimizin kedisi Minnoş'u pencere kenarında uyurken çizdim. Karakalemin siyah-beyaz dünyasında ışık ve gölge oyunlarıyla derinlik yaratmaya çalıştım."
+  },
+  {
+    "id": 5,
+    "title": "Anadolu Sofrası",
+    "artist": "Selin Arslan",
+    "grade": "12-A",
+    "technique": "yagliboya",
+    "techniqueLabel": "Yağlı Boya",
+    "dimensions": "50 × 70 cm",
+    "year": "2026",
+    "image": "images/artwork_stillife.png",
+    "description": "Geleneksel Türk çay kültürünü natürmort olarak resmettiğim bu çalışmada, ince belli çay bardakları, bakır çaydanlık ve narların bir arada oluşturduğu kompozisyonu Rembrandt ışığıyla aydınlattım."
+  },
+  {
+    "id": 6,
+    "title": "Kapadokya Rüyası",
+    "artist": "Burak Şahin",
+    "grade": "10-A",
+    "technique": "akrilik",
+    "techniqueLabel": "Akrilik",
+    "dimensions": "60 × 90 cm",
+    "year": "2026",
+    "image": "images/artwork_cappadocia.png",
+    "description": "Geçen yaz ailece gittiğimiz Kapadokya'da şafak vakti gökyüzüne yükselen balonları izlemek büyüleyiciydi. Bu anı akrilik boyayla tuvale aktarırken, pastel tonları ve rüya gibi bir atmosfer yaratmaya çalıştım."
+  },
+  {
+    "id": 7,
+    "title": "Tarihi Sokaklar",
+    "artist": "Defne Koç",
+    "grade": "11-C",
+    "technique": "murekkep",
+    "techniqueLabel": "Mürekkep",
+    "dimensions": "30 × 42 cm",
+    "year": "2026",
+    "image": "images/artwork_architecture.png",
+    "description": "Osmanlı döneminden kalma ahşap evlerin bulunduğu tarihi bir sokağı mürekkep ve kalemle çizdim. Çapraz tarama tekniğiyle derinlik ve doku oluştururken, mimari detaylara sadık kalmaya özen gösterdim."
+  },
+  {
+    "id": 8,
+    "title": "Zeytin Bahçesi",
+    "artist": "Emre Aydın",
+    "grade": "12-C",
+    "technique": "yagliboya",
+    "techniqueLabel": "Yağlı Boya",
+    "dimensions": "55 × 75 cm",
+    "year": "2026",
+    "image": "images/artwork_nature.png",
+    "description": "Ege kıyılarındaki zeytin bahçelerinden esinlenerek yaptığım bu manzara resminde, Van Gogh'un post-empresyonist üslubundan ilham aldım. Canlı yeşiller, toprak tonları ve yabani çiçeklerle dolu bir Akdeniz bahçesini tuvale aktardım."
+  }
+]

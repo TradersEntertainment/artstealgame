@@ -468,42 +468,39 @@ function createCorridor() {
     canvas.height = 256;
     const ctx = canvas.getContext('2d');
     
-    // Dark elegant background
-    ctx.fillStyle = '#11100f';
-    ctx.fillRect(0, 0, 1024, 256);
+    // Transparent background for wall-painted look
+    ctx.clearRect(0, 0, 1024, 256);
     
-    // Gold borders
-    ctx.fillStyle = '#c9a96e';
-    ctx.fillRect(0, 0, 1024, 12);
-    ctx.fillRect(0, 244, 1024, 12);
-    
-    // Text
-    ctx.fillStyle = '#f5f0e8';
-    ctx.font = 'bold 70px serif';
+    // Elegant, flat black text
+    ctx.fillStyle = '#1a1a1a';
+    ctx.font = 'normal 70px "Times New Roman", serif'; // Daha şık ve ince bir görünüm
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
-    // Draw text and arrow
-    const arrow = isRightArrow ? '➔' : '⬅';
-    const displayText = isRightArrow ? `${text} ${arrow}` : `${arrow} ${text}`;
+    // Draw text and elegant thin arrows
+    // ⟶ and ⟵ are more elegant than thick arrows
+    const arrow = isRightArrow ? '⟶' : '⟵';
+    const displayText = isRightArrow ? `${text}  ${arrow}` : `${arrow}  ${text}`;
     ctx.fillText(displayText, 512, 128);
 
     const tex = new THREE.CanvasTexture(canvas);
-    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.4 });
+    // Transparent material
+    const mat = new THREE.MeshStandardMaterial({ 
+      map: tex, 
+      transparent: true,
+      roughness: 0.8,
+      depthWrite: false // prevents z-fighting issues with the wall
+    });
     const geo = new THREE.PlaneGeometry(6, 1.5);
     return new THREE.Mesh(geo, mat);
   }
 
-  // Sign on Back Wall (Z = -CORRIDOR_DEPTH/2), pointing Right (+X) to Özel Koleksiyon
+  // Sign on Back Wall (Z = -CORRIDOR_DEPTH/2)
   const signBack = createSign('FSFL Özel Koleksiyon', true);
-  signBack.position.set(midX, EYE_HEIGHT + 0.5, -CORRIDOR_DEPTH/2 + 0.05);
+  // Extremely close to wall (0.01) to look painted
+  signBack.position.set(midX, EYE_HEIGHT + 0.5, -CORRIDOR_DEPTH/2 + 0.01);
   scene.add(signBack);
 
-  // Sign on Front Wall (Z = CORRIDOR_DEPTH/2), pointing Left (-X) to 2025-2026. 
-  // It faces -Z, so its local Right is -X. So we use the Right arrow for it to point to -X?
-  // Wait: if I'm looking at the Front Wall (facing +Z), Left is +X, Right is -X.
-  // Room 1 is at -X. So if I look at Front Wall, Room 1 is to my Right.
-  // So the sign on Front Wall should point RIGHT to go to Room 1!
   // Let's verify: Stand in corridor. Look at Front Wall (+Z).
   // +X (Room 2) is on your left.
   // -X (Room 1) is on your right.

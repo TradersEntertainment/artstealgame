@@ -27,6 +27,20 @@ let artworks = [];
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(0, 0);
 
+// ─── Mobile Detection ──────────────────────────────
+const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1);
+let mobileActive = false;
+
+// Touch look state
+const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+let touchLookId = null;
+let touchLookPrev = { x: 0, y: 0 };
+const LOOK_SENSITIVITY = 0.004;
+
+// Joystick state
+let joystickActive = false;
+let joystickInput = { x: 0, y: 0 };
+
 // ─── DOM ───────────────────────────────────────────
 const loadingScreen = document.getElementById('loading-screen');
 const loadingFill = document.getElementById('loading-fill');
@@ -35,6 +49,10 @@ const startOverlay = document.getElementById('start-overlay');
 const hud = document.getElementById('hud');
 const crosshair = document.getElementById('crosshair');
 const panel = document.getElementById('artwork-panel');
+const joystickZone = document.getElementById('joystick-zone');
+const joystickKnob = document.getElementById('joystick-knob');
+const joystickBase = document.getElementById('joystick-base');
+const mobileHint = document.getElementById('mobile-hint');
 
 // ─── Init ──────────────────────────────────────────
 async function init() {
@@ -95,6 +113,9 @@ async function init() {
   setTimeout(() => {
     loadingScreen.classList.add('fade-out');
     startOverlay.classList.remove('hidden');
+    if (isMobile) {
+      document.getElementById('start-click-text').textContent = 'Dokunarak başlayın';
+    }
     setTimeout(() => loadingScreen.style.display = 'none', 600);
   }, 500);
 
@@ -326,10 +347,35 @@ function createDecorations() {
 
 // ─── Events ────────────────────────────────────────
 function setupEvents() {
-  // Pointer lock
-  startOverlay.addEventListener('click', () => {
-    controls.lock();
+  if (isMobile) {
+    setupMobileEvents();
+  } else {
+    setupDesktopEvents();
+  }
+
+  // Close panel (shared)
+  document.getElementById('panel-close').addEventListener('click', () => {
+    panel.classList.remove('open');
+    if (isMobile) {
+      mobileActive = true;
+      joystickZone.style.display = '';
+      mobileHint.style.display = '';
+    } else {
+      controls.lock();
+    }
   });
+
+  // Resize (shared)
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+}
+
+// ─── Desktop Events ────────────────────────────────
+function setupDesktopEvents() {
+  startOverlay.addEventListener('click', () => controls.lock());
 
   controls.addEventListener('lock', () => {
     startOverlay.classList.add('hidden');
@@ -345,7 +391,6 @@ function setupEvents() {
     crosshair.style.display = 'none';
   });
 
-  // Movement
   document.addEventListener('keydown', (e) => {
     switch (e.code) {
       case 'KeyW': case 'ArrowUp': moveForward = true; break;
@@ -364,37 +409,154 @@ function setupEvents() {
     }
   });
 
-  // Click on paintings
-  renderer.domElement.addEventListener('click', onPaintingClick);
-
-  // Close panel
-  document.getElementById('panel-close').addEventListener('click', () => {
-    panel.classList.remove('open');
-    controls.lock();
-  });
-
-  // Resize
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.domElement.addEventListener('click', () => {
+    if (!controls.isLocked) return;
+    raycaster.setFromCamera(pointer, camera);
+    const intersects = raycaster.intersectObjects(paintingMeshes);
+    if (intersects.length > 0 && intersects[0].distance < 6) {
+      const artwork = intersects[0].object.userData.artwork;
+      if (artwork) showArtworkPanel(artwork);
+    }
   });
 }
 
-function onPaintingClick() {
-  if (!controls.isLocked) return;
+// ─── Mobile Events ─────────────────────────────────
+function setupMobileEvents() {
+  // Start touch
+  startOverlay.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    startOverlay.classList.add('hidden');
+    mobileActive = true;
+    joystickZone.style.display = '';
+    mobileHint.style.display = '';
+    euler.setFromQuaternion(camera.quaternion);
+  });
 
-  raycaster.setFromCamera(pointer, camera);
-  const intersects = raycaster.intersectObjects(paintingMeshes);
+  // Joystick
+  let joystickTouchId = null;
+  const joystickRect = () => joystickBase.getBoundingClientRect();
+  const joystickRadius = 60;
+  const knobMax = 38;
 
-  if (intersects.length > 0 && intersects[0].distance < 6) {
-    const artwork = intersects[0].object.userData.artwork;
-    if (artwork) showArtworkPanel(artwork);
+  joystickBase.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const t = e.changedTouches[0];
+    joystickTouchId = t.identifier;
+    joystickActive = true;
+    joystickKnob.classList.add('active');
+    updateJoystick(t);
+  });
+
+  joystickBase.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    for (const t of e.changedTouches) {
+      if (t.identifier === joystickTouchId) {
+        updateJoystick(t);
+        break;
+      }
+    }
+  });
+
+  const resetJoystick = () => {
+    joystickTouchId = null;
+    joystickActive = false;
+    joystickInput = { x: 0, y: 0 };
+    joystickKnob.style.transform = 'translate(-50%, -50%)';
+    joystickKnob.classList.remove('active');
+  };
+
+  joystickBase.addEventListener('touchend', resetJoystick);
+  joystickBase.addEventListener('touchcancel', resetJoystick);
+
+  function updateJoystick(touch) {
+    const rect = joystickRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    let dx = touch.clientX - cx;
+    let dy = touch.clientY - cy;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist > knobMax) {
+      dx = (dx / dist) * knobMax;
+      dy = (dy / dist) * knobMax;
+    }
+    joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    joystickInput = { x: dx / knobMax, y: dy / knobMax };
   }
+
+  // Touch look (right half of screen, i.e. not joystick)
+  renderer.domElement.addEventListener('touchstart', (e) => {
+    if (!mobileActive) return;
+    for (const t of e.changedTouches) {
+      // Ignore touches on joystick area
+      if (t.clientX < 180 && t.clientY > window.innerHeight - 180) continue;
+      if (touchLookId === null) {
+        touchLookId = t.identifier;
+        touchLookPrev = { x: t.clientX, y: t.clientY };
+      }
+    }
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchmove', (e) => {
+    if (!mobileActive || touchLookId === null) return;
+    for (const t of e.changedTouches) {
+      if (t.identifier === touchLookId) {
+        const dx = t.clientX - touchLookPrev.x;
+        const dy = t.clientY - touchLookPrev.y;
+        euler.y -= dx * LOOK_SENSITIVITY;
+        euler.x -= dy * LOOK_SENSITIVITY;
+        euler.x = Math.max(-Math.PI / 2.5, Math.min(Math.PI / 2.5, euler.x));
+        camera.quaternion.setFromEuler(euler);
+        touchLookPrev = { x: t.clientX, y: t.clientY };
+      }
+    }
+  }, { passive: true });
+
+  const releaseLook = (e) => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === touchLookId) {
+        touchLookId = null;
+      }
+    }
+  };
+  renderer.domElement.addEventListener('touchend', releaseLook, { passive: true });
+  renderer.domElement.addEventListener('touchcancel', releaseLook, { passive: true });
+
+  // Tap to inspect painting (short tap detection)
+  let tapStart = 0;
+  let tapPos = { x: 0, y: 0 };
+  renderer.domElement.addEventListener('touchstart', (e) => {
+    tapStart = Date.now();
+    tapPos = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+  }, { passive: true });
+
+  renderer.domElement.addEventListener('touchend', (e) => {
+    if (!mobileActive) return;
+    const elapsed = Date.now() - tapStart;
+    const t = e.changedTouches[0];
+    const moved = Math.abs(t.clientX - tapPos.x) + Math.abs(t.clientY - tapPos.y);
+    if (elapsed < 300 && moved < 20) {
+      // Short tap — check painting hit
+      const nx = (t.clientX / window.innerWidth) * 2 - 1;
+      const ny = -(t.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(new THREE.Vector2(nx, ny), camera);
+      const intersects = raycaster.intersectObjects(paintingMeshes);
+      if (intersects.length > 0 && intersects[0].distance < 6) {
+        const artwork = intersects[0].object.userData.artwork;
+        if (artwork) {
+          mobileActive = false;
+          joystickZone.style.display = 'none';
+          mobileHint.style.display = 'none';
+          showArtworkPanel(artwork);
+        }
+      }
+    }
+  }, { passive: true });
 }
 
 function showArtworkPanel(artwork) {
-  controls.unlock();
+  if (!isMobile) controls.unlock();
   document.getElementById('panel-overline').textContent = artwork.techniqueLabel || '';
   document.getElementById('panel-title').textContent = artwork.title;
   document.getElementById('panel-artist').textContent = `${artwork.artist} · ${artwork.grade}`;
@@ -408,23 +570,39 @@ function showArtworkPanel(artwork) {
 // ─── Animation Loop ────────────────────────────────
 function animate() {
   requestAnimationFrame(animate);
+  const delta = clock.getDelta();
+  const isActive = isMobile ? mobileActive : controls.isLocked;
 
-  if (controls.isLocked) {
-    const delta = clock.getDelta();
+  if (isActive) {
     const damping = 8;
-
     velocity.x -= velocity.x * damping * delta;
     velocity.z -= velocity.z * damping * delta;
 
-    direction.z = Number(moveForward) - Number(moveBackward);
-    direction.x = Number(moveRight) - Number(moveLeft);
-    direction.normalize();
+    if (isMobile && joystickActive) {
+      // Joystick input → direction relative to camera facing
+      velocity.z += joystickInput.y * WALK_SPEED * delta * 10;
+      velocity.x += joystickInput.x * WALK_SPEED * delta * 10;
 
-    if (moveForward || moveBackward) velocity.z -= direction.z * WALK_SPEED * delta * 10;
-    if (moveLeft || moveRight) velocity.x -= direction.x * WALK_SPEED * delta * 10;
+      // Move in camera direction
+      const forward = new THREE.Vector3();
+      camera.getWorldDirection(forward);
+      forward.y = 0;
+      forward.normalize();
+      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
 
-    controls.moveRight(-velocity.x * delta);
-    controls.moveForward(-velocity.z * delta);
+      camera.position.addScaledVector(forward, -velocity.z * delta);
+      camera.position.addScaledVector(right, velocity.x * delta);
+    } else if (!isMobile) {
+      direction.z = Number(moveForward) - Number(moveBackward);
+      direction.x = Number(moveRight) - Number(moveLeft);
+      direction.normalize();
+
+      if (moveForward || moveBackward) velocity.z -= direction.z * WALK_SPEED * delta * 10;
+      if (moveLeft || moveRight) velocity.x -= direction.x * WALK_SPEED * delta * 10;
+
+      controls.moveRight(-velocity.x * delta);
+      controls.moveForward(-velocity.z * delta);
+    }
 
     // Clamp to room bounds
     const margin = 1;
@@ -438,3 +616,4 @@ function animate() {
 
 // ─── Start ─────────────────────────────────────────
 init();
+

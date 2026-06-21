@@ -1875,6 +1875,63 @@ ul, ol {
   color: var(--color-text-muted);
 }
 
+/* New tour-option cards (anchor links) */
+.tour-option {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  margin-bottom: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: var(--color-text);
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+.tour-option:hover {
+  background: rgba(201, 169, 110, 0.1);
+  border-color: var(--color-accent);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(201, 169, 110, 0.15);
+}
+.tour-option-icon {
+  font-size: 2rem;
+  width: 48px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.tour-option-info {
+  flex: 1;
+}
+.tour-option-info h3 {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-accent);
+  margin-bottom: 4px;
+}
+.tour-option-info p {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.tour-option-arrow {
+  font-size: 1.5rem;
+  color: var(--color-accent);
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: all 0.3s ease;
+}
+.tour-option:hover .tour-option-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+.tour-option-special {
+  border-color: rgba(201, 169, 110, 0.2);
+  background: rgba(201, 169, 110, 0.03);
+}
+
 /* ─── Tour Selection Modal ─── */
 .modal-overlay {
   position: fixed;

@@ -31,7 +31,7 @@ let filteredArtworks = [];
 function createGalleryCard(artwork, index) {
   const card = document.createElement('article');
   card.className = 'gallery-card reveal';
-  card.dataset.technique = artwork.technique;
+  card.dataset.exhibition = artwork.exhibition || '2025-2026';
   card.dataset.index = index;
   card.style.transitionDelay = `${(index % 4) * 80}ms`;
 
@@ -48,7 +48,7 @@ function createGalleryCard(artwork, index) {
       <h3 class="gallery-card-title">${artwork.title}</h3>
       <p class="gallery-card-artist">${artwork.artist} · ${artwork.grade}</p>
       <div class="gallery-card-meta">
-        <span class="gallery-card-technique">${artwork.techniqueLabel}</span>
+        <span class="gallery-card-technique">${artwork.exhibition === 'ozel-koleksiyon' ? 'Özel Koleksiyon' : artwork.exhibition || '2025-2026'}</span>
         <span class="gallery-card-dimensions">${artwork.dimensions}</span>
       </div>
     </div>
@@ -130,7 +130,7 @@ filterBtns.forEach((btn) => {
     if (filter === 'all') {
       filteredArtworks = [...artworks];
     } else {
-      filteredArtworks = artworks.filter((a) => a.technique === filter);
+      filteredArtworks = artworks.filter((a) => (a.exhibition || '2025-2026') === filter);
     }
 
     // Animate out, then re-render

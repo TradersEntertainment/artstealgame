@@ -267,11 +267,8 @@
       <!-- Filter Buttons -->
       <div class="gallery-filters reveal">
         <button class="filter-btn active" data-filter="all">Tümü</button>
-        <button class="filter-btn" data-filter="yagliboya">Yağlı Boya</button>
-        <button class="filter-btn" data-filter="suluboya">Suluboya</button>
-        <button class="filter-btn" data-filter="akrilik">Akrilik</button>
-        <button class="filter-btn" data-filter="karakalem">Karakalem</button>
-        <button class="filter-btn" data-filter="murekkep">Mürekkep</button>
+        <button class="filter-btn" data-filter="2025-2026">2025-2026</button>
+        <button class="filter-btn" data-filter="ozel-koleksiyon">FSFL Özel Koleksiyon</button>
       </div>
 
       <!-- Gallery Grid -->
@@ -539,13 +536,46 @@
         </button>
       </div>
       <div class="modal-body" id="tour-modal-body">
-        <div style="text-align:center; padding: 20px;">
-          <span class="spinner"></span> Yükleniyor...
-        </div>
+        <a href="3d.html?exhibition=2025-2026" class="tour-option">
+          <div class="tour-option-icon">🎨</div>
+          <div class="tour-option-info">
+            <h3>2025-2026 Sergisi</h3>
+            <p>Öğrencilerimizin bu yılki eserlerini keşfedin</p>
+          </div>
+          <div class="tour-option-arrow">→</div>
+        </a>
+        <a href="3d.html?exhibition=ozel-koleksiyon" class="tour-option tour-option-special">
+          <div class="tour-option-icon">🏆</div>
+          <div class="tour-option-info">
+            <h3>FSFL Özel Koleksiyon</h3>
+            <p>Okulumuzun kalıcı sanat koleksiyonunu gezin</p>
+          </div>
+          <div class="tour-option-arrow">→</div>
+        </a>
       </div>
     </div>
   </div>
 
   <script src="script.js"></script>
+  <script>
+    // Tour Modal Open/Close
+    function openTourModal() {
+      document.getElementById('tour-modal-overlay').classList.remove('hidden');
+    }
+    function closeTourModal() {
+      document.getElementById('tour-modal-overlay').classList.add('hidden');
+    }
+    document.getElementById('tour-modal-overlay').addEventListener('click', (e) => {
+      if (e.target.id === 'tour-modal-overlay') closeTourModal();
+    });
+
+    // Hook the 3D tour button to open the modal instead of navigating
+    document.querySelectorAll('a[href="3d.html"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        openTourModal();
+      });
+    });
+  </script>
 </body>
 </html>

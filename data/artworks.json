@@ -8,8 +8,9 @@
     "techniqueLabel": "Yağlı Boya",
     "dimensions": "60 × 80 cm",
     "year": "2026",
+    "exhibition": "2025-2026",
     "image": "images/artwork_istanbul.png",
-    "description": "İstanbul siluetini gün batımının sıcak tonlarıyla yeniden yorumladığım bu çalışmada, şehrin tarihî dokusunu empresyonist bir üslupla aktarmayı amaçladım. Boğaz'ın üzerindeki ışık oyunları ve camilerin gökyüzüyle buluşması, beni derinden etkileyen bir an oldu."
+    "description": "İstanbul siluetini gün batımının sıcak tonlarıyla yeniden yorumladığım bu çalışmada, şehrin tarihî dokusunu empresyonist bir üslupla aktarmayı amaçladım."
   },
   {
     "id": 2,
@@ -20,8 +21,9 @@
     "techniqueLabel": "Suluboya",
     "dimensions": "42 × 56 cm",
     "year": "2026",
+    "exhibition": "2025-2026",
     "image": "images/artwork_portrait.png",
-    "description": "Büyükannemin yüzündeki her çizgi, yaşanmış bir hikâyenin izini taşıyor. Bu portre çalışmasında suluboyayı tercih ettim; çünkü suluboyayı kontrol etmenin zorluğu, zamanın kontrol edilemezliğiyle örtüşüyordu. Her renk geçişi, anıların birbirine karışması gibi."
+    "description": "Büyükannemin yüzündeki her çizgi, yaşanmış bir hikâyenin izini taşıyor. Bu portre çalışmasında suluboyayı tercih ettim."
   },
   {
     "id": 3,
@@ -32,8 +34,9 @@
     "techniqueLabel": "Akrilik",
     "dimensions": "70 × 100 cm",
     "year": "2026",
+    "exhibition": "2025-2026",
     "image": "images/artwork_abstract.png",
-    "description": "Duyguların renklere dönüştüğü bu soyut çalışmada, müziğin görsel bir dile çevrilmesini denedim. Kırmızılar tutku ve enerjiyi, maviler huzur ve derinliği, altın tonları ise umut ve ışığı temsil ediyor."
+    "description": "Soyut ekspresyonizm benim için duyguların en saf haliyle tuvale akmasıdır. Bu çalışmada iç dünyamın sesini dinledim."
   },
   {
     "id": 4,
@@ -44,8 +47,9 @@
     "techniqueLabel": "Karakalem",
     "dimensions": "35 × 50 cm",
     "year": "2026",
-    "image": "images/artwork_charcoal.png",
-    "description": "Evimizin kedisi Minnoş'u pencere kenarında uyurken çizdim. Karakalemin siyah-beyaz dünyasında ışık ve gölge oyunlarıyla derinlik yaratmaya çalıştım."
+    "exhibition": "2025-2026",
+    "image": "images/artwork_window.png",
+    "description": "Pencere kenarında oturan kedimizi çizerken, günlük hayatın içindeki huzuru yakalamaya çalıştım."
   },
   {
     "id": 5,
@@ -56,8 +60,9 @@
     "techniqueLabel": "Yağlı Boya",
     "dimensions": "50 × 70 cm",
     "year": "2026",
-    "image": "images/artwork_stillife.png",
-    "description": "Geleneksel Türk çay kültürünü natürmort olarak resmettiğim bu çalışmada, ince belli çay bardakları, bakır çaydanlık ve narların bir arada oluşturduğu kompozisyonu Rembrandt ışığıyla aydınlattım."
+    "exhibition": "2025-2026",
+    "image": "images/artwork_stilllife.png",
+    "description": "Anadolu mutfağının zenginliğini bir natürmort olarak tuvale taşıdım."
   },
   {
     "id": 6,
@@ -68,20 +73,22 @@
     "techniqueLabel": "Akrilik",
     "dimensions": "60 × 90 cm",
     "year": "2026",
+    "exhibition": "2025-2026",
     "image": "images/artwork_cappadocia.png",
-    "description": "Geçen yaz ailece gittiğimiz Kapadokya'da şafak vakti gökyüzüne yükselen balonları izlemek büyüleyiciydi. Bu anı akrilik boyayla tuvale aktarırken, pastel tonları ve rüya gibi bir atmosfer yaratmaya çalıştım."
+    "description": "Kapadokya'nın peri bacaları arasında süzülen balonları izlerken hissettiğim o masalsı duyguyu aktarmak istedim."
   },
   {
     "id": 7,
-    "title": "Tarihi Sokaklar",
-    "artist": "Defne Koç",
+    "title": "Dijital Çağın Yalnızlığı",
+    "artist": "Deniz Yıldırım",
     "grade": "11-C",
     "technique": "murekkep",
     "techniqueLabel": "Mürekkep",
     "dimensions": "30 × 42 cm",
     "year": "2026",
-    "image": "images/artwork_architecture.png",
-    "description": "Osmanlı döneminden kalma ahşap evlerin bulunduğu tarihi bir sokağı mürekkep ve kalemle çizdim. Çapraz tarama tekniğiyle derinlik ve doku oluştururken, mimari detaylara sadık kalmaya özen gösterdim."
+    "exhibition": "2025-2026",
+    "image": "images/artwork_digital.png",
+    "description": "Telefon ekranlarının soğuk ışığında aydınlanan yüzler... Bu mürekkep çalışmasında, dijital çağın paradoksunu sorguladım."
   },
   {
     "id": 8,
@@ -92,7 +99,73 @@
     "techniqueLabel": "Yağlı Boya",
     "dimensions": "55 × 75 cm",
     "year": "2026",
+    "exhibition": "2025-2026",
     "image": "images/artwork_nature.png",
-    "description": "Ege kıyılarındaki zeytin bahçelerinden esinlenerek yaptığım bu manzara resminde, Van Gogh'un post-empresyonist üslubundan ilham aldım. Canlı yeşiller, toprak tonları ve yabani çiçeklerle dolu bir Akdeniz bahçesini tuvale aktardım."
+    "description": "Ege kıyılarındaki zeytin bahçelerinden esinlenerek yaptığım bu manzara resminde, Van Gogh'un post-empresyonist üslubundan ilham aldım."
+  },
+  {
+    "id": 101,
+    "title": "Boğaz'da Altın Akşam",
+    "artist": "FSFL Sanat Birimi",
+    "grade": "",
+    "technique": "yagliboya",
+    "techniqueLabel": "Yağlı Boya",
+    "dimensions": "80 × 120 cm",
+    "year": "2024",
+    "exhibition": "ozel-koleksiyon",
+    "image": "images/ozel_koleksiyon_1.png",
+    "description": "İstanbul Boğazı'nın eşsiz siluetini altın saat ışığında yakalayan bu eser, okulumuzun kalıcı koleksiyonunun en değerli parçalarından biridir."
+  },
+  {
+    "id": 102,
+    "title": "Kozmik Enerji",
+    "artist": "FSFL Sanat Birimi",
+    "grade": "",
+    "technique": "akrilik",
+    "techniqueLabel": "Akrilik & Altın Varak",
+    "dimensions": "100 × 100 cm",
+    "year": "2023",
+    "exhibition": "ozel-koleksiyon",
+    "image": "images/ozel_koleksiyon_2.png",
+    "description": "Soyut ekspresyonizmin gücünü altın varak ile birleştiren bu eser, evrenin sonsuz enerjisini ve insanın kozmik bağlantısını araştırır."
+  },
+  {
+    "id": 103,
+    "title": "Kapadokya Şafağı",
+    "artist": "FSFL Sanat Birimi",
+    "grade": "",
+    "technique": "yagliboya",
+    "techniqueLabel": "Yağlı Boya",
+    "dimensions": "70 × 100 cm",
+    "year": "2024",
+    "exhibition": "ozel-koleksiyon",
+    "image": "images/ozel_koleksiyon_3.png",
+    "description": "Kapadokya'nın peri bacaları üzerinde süzülen sıcak hava balonları, şafağın ilk ışıklarıyla birlikte masalsı bir atmosfer yaratır."
+  },
+  {
+    "id": 104,
+    "title": "Anadolu Kadını",
+    "artist": "FSFL Sanat Birimi",
+    "grade": "",
+    "technique": "yagliboya",
+    "techniqueLabel": "Yağlı Boya",
+    "dimensions": "60 × 80 cm",
+    "year": "2023",
+    "exhibition": "ozel-koleksiyon",
+    "image": "images/ozel_koleksiyon_4.png",
+    "description": "Rembrandt'ın chiaroscuro tekniğinden ilham alan bu güçlü portre, Anadolu kadınının bilgeliğini ve onurunu yakalar."
+  },
+  {
+    "id": 105,
+    "title": "Anadolu Sofrası — Natürmort",
+    "artist": "FSFL Sanat Birimi",
+    "grade": "",
+    "technique": "yagliboya",
+    "techniqueLabel": "Yağlı Boya",
+    "dimensions": "50 × 70 cm",
+    "year": "2024",
+    "exhibition": "ozel-koleksiyon",
+    "image": "images/ozel_koleksiyon_5.png",
+    "description": "Geleneksel Türk çay bardakları, bakır çaydanlık, narlar ve kır çiçekleri; Anadolu kültürünün en sıcak sembollerini bir araya getiren bu natürmort."
   }
 ]

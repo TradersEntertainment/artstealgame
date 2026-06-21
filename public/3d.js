@@ -5,6 +5,8 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 import { Reflector } from 'three/addons/objects/Reflector.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 // ─── Config ────────────────────────────────────────
 const ROOM = { width: 28, height: 5, depth: 40 };
@@ -88,6 +90,29 @@ function calculateRoom(count) {
 }
 
 // ─── Init ──────────────────────────────────────────
+let sharedPlayerModel = null;
+let playerAnimations = null;
+
+function loadPlayerModel() {
+  const loader = new GLTFLoader();
+  loader.load('assets/Soldier.glb', (gltf) => {
+    sharedPlayerModel = gltf.scene;
+    playerAnimations = gltf.animations;
+    
+    // Optimize shadows and material
+    sharedPlayerModel.traverse((child) => {
+      if (child.isMesh) {
+        child.castShadow = true;
+        child.receiveShadow = true;
+        // make sure material is simple enough
+      }
+    });
+    
+    // Scale Soldier up or down as needed (Soldier is usually ~1 unit tall, we want ~1.6m)
+    sharedPlayerModel.scale.set(1.1, 1.1, 1.1);
+  });
+}
+
 async function init() {
   // Fetch artworks
   try {
@@ -109,6 +134,8 @@ async function init() {
 
   // Dynamic room sizing
   calculateRoom(artworks.length);
+
+  loadPlayerModel();
 
   updateLoading(10, 'Sahne oluşturuluyor…');
 
@@ -941,7 +968,7 @@ function animate() {
       dustParticles.geometry.attributes.position.needsUpdate = true;
     }
 
-    if (typeof updatePlayers === 'function') updatePlayers();
+    if (typeof updatePlayers === 'function') updatePlayers(delta);
 
     renderer.render(scene, camera);
 }
@@ -1024,27 +1051,66 @@ function addPlayer(data) {
   const color = new THREE.Color(data.color || '#c9a96e');
   const group = new THREE.Group();
 
-  // Body — capsule shape
-  const bodyGeo = new THREE.CapsuleGeometry(0.22, 0.7, 4, 8);
-  const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.2 });
-  const body = new THREE.Mesh(bodyGeo, bodyMat);
-  body.position.y = -0.3;
-  group.add(body);
+  let mixer = null;
+  let actionIdle = null;
+  let actionWalk = null;
+  let currentAction = null;
 
-  // Head — sphere
-  const headGeo = new THREE.SphereGeometry(0.18, 8, 8);
-  const headMat = new THREE.MeshStandardMaterial({ color: 0xf5e6d0, roughness: 0.7 });
-  const head = new THREE.Mesh(headGeo, headMat);
-  head.position.y = 0.35;
-  group.add(head);
+  if (sharedPlayerModel) {
+    const clone = SkeletonUtils.clone(sharedPlayerModel);
+    
+    // Optional: tint the soldier to match the assigned color
+    clone.traverse((child) => {
+      if (child.isMesh && child.material) {
+        child.material = child.material.clone();
+        // The soldier texture is already colored, but we can give a slight emissive tint
+        child.material.emissive = color;
+        child.material.emissiveIntensity = 0.2;
+      }
+    });
 
-  // Direction indicator (small nose)
-  const noseGeo = new THREE.ConeGeometry(0.06, 0.12, 4);
-  const noseMat = new THREE.MeshStandardMaterial({ color });
-  const nose = new THREE.Mesh(noseGeo, noseMat);
-  nose.rotation.x = -Math.PI / 2;
-  nose.position.set(0, 0.3, 0.2);
-  group.add(nose);
+    // Soldier is about 1.6m if scaled 1.1x in init. Adjust Y to plant feet.
+    clone.position.y = -EYE_HEIGHT + 0.1; 
+    // Wait, soldier might face Z instead of -Z.
+    clone.rotation.y = Math.PI; 
+
+    group.add(clone);
+
+    if (playerAnimations && playerAnimations.length > 0) {
+      mixer = new THREE.AnimationMixer(clone);
+      
+      const idleClip = THREE.AnimationClip.findByName(playerAnimations, 'Idle');
+      const walkClip = THREE.AnimationClip.findByName(playerAnimations, 'Walk') || THREE.AnimationClip.findByName(playerAnimations, 'Run');
+      
+      if (idleClip) actionIdle = mixer.clipAction(idleClip);
+      if (walkClip) actionWalk = mixer.clipAction(walkClip);
+      
+      if (actionIdle) {
+        actionIdle.play();
+        currentAction = actionIdle;
+      }
+    }
+  } else {
+    // Fallback: Body — capsule shape
+    const bodyGeo = new THREE.CapsuleGeometry(0.22, 0.7, 4, 8);
+    const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.2 });
+    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    body.position.y = -0.3;
+    group.add(body);
+
+    const headGeo = new THREE.SphereGeometry(0.18, 8, 8);
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xf5e6d0, roughness: 0.7 });
+    const head = new THREE.Mesh(headGeo, headMat);
+    head.position.y = 0.35;
+    group.add(head);
+
+    const noseGeo = new THREE.ConeGeometry(0.06, 0.12, 4);
+    const noseMat = new THREE.MeshStandardMaterial({ color });
+    const nose = new THREE.Mesh(noseGeo, noseMat);
+    nose.rotation.x = -Math.PI / 2;
+    nose.position.set(0, 0.3, 0.2);
+    group.add(nose);
+  }
 
   // Name plate (canvas texture)
   const nameSprite = createNameSprite(data.name || 'Ziyaretçi', data.color);
@@ -1062,6 +1128,10 @@ function addPlayer(data) {
   otherPlayers.set(data.id, {
     mesh: group,
     nameSprite,
+    mixer,
+    actionIdle,
+    actionWalk,
+    currentAction,
     targetPos: data.position || { x: 0, y: EYE_HEIGHT, z: 15 },
     targetRot: data.rotation || { x: 0, y: 0 },
   });
@@ -1121,24 +1191,28 @@ function updateOnlineCount() {
 }
 
 // Smooth interpolation for other players — called in animate loop
-function updatePlayers() {
+function updatePlayers(delta) {
   const time = Date.now() * 0.005;
   otherPlayers.forEach((player) => {
+    let speed = 0;
     if (player.targetPos) {
       const dx = player.targetPos.x - player.mesh.position.x;
       const dz = player.targetPos.z - player.mesh.position.z;
-      const speed = Math.sqrt(dx*dx + dz*dz);
+      speed = Math.sqrt(dx*dx + dz*dz);
       
       player.mesh.position.x += dx * 0.15;
       player.mesh.position.z += dz * 0.15;
       
-      // Bobbing
-      let yTarget = player.targetPos.y;
-      if (speed > 0.01) {
-        yTarget += Math.sin(time) * 0.05;
+      // Bobbing only for capsule fallback
+      if (!player.mixer) {
+        let yTarget = player.targetPos.y;
+        if (speed > 0.01) {
+          yTarget += Math.sin(time) * 0.05;
+        }
+        player.mesh.position.y += (yTarget - player.mesh.position.y) * 0.15;
       }
-      player.mesh.position.y += (yTarget - player.mesh.position.y) * 0.15;
     }
+
     if (player.targetRot) {
       // Rotate body to face direction
       const targetY = player.targetRot.y || 0;
@@ -1148,9 +1222,25 @@ function updatePlayers() {
       if (diff < -Math.PI) diff += Math.PI * 2;
       player.mesh.rotation.y += diff * 0.15;
     }
+
     // Nameplate always faces camera
     if (player.nameSprite) {
       player.nameSprite.lookAt(camera.position);
+    }
+
+    // Handle GLTF animations
+    if (player.mixer) {
+      player.mixer.update(delta || 0.016);
+      
+      let targetAction = speed > 0.02 ? player.actionWalk : player.actionIdle;
+      
+      if (targetAction && targetAction !== player.currentAction) {
+        targetAction.reset().fadeIn(0.2).play();
+        if (player.currentAction) {
+          player.currentAction.fadeOut(0.2);
+        }
+        player.currentAction = targetAction;
+      }
     }
   });
 }

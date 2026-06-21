@@ -260,10 +260,10 @@ function createRoom() {
   const skyDepth = Math.max(10, ROOM.depth * 0.6);
   const skyGeo = new THREE.PlaneGeometry(skyWidth, skyDepth);
   
-  const skyTex = texLoader.load('images/famous_starrynight.png');
+  const skyTex = texLoader.load('images/starry_sky_texture.jpg');
   skyTex.wrapS = THREE.RepeatWrapping;
   skyTex.wrapT = THREE.RepeatWrapping;
-  skyTex.repeat.set(2, 4); // Tile slightly to make it look like a continuous sky
+  skyTex.repeat.set(1, 1); // Single large expanse for a realistic open sky feel
 
   const skyMat = new THREE.MeshBasicMaterial({ 
     map: skyTex, 

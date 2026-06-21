@@ -23,6 +23,11 @@ const MAX_SPOTLIGHTS = 50; // Every painting gets a spotlight
 let audioListener = null;
 let bgmSound = null;
 
+// ─── Portal System ─────────────────────────────────
+let portalMesh = null;
+let portalTargetUrl = null;
+let portalGroupGlobal = null;
+
 function initAudio() {
   if (audioListener) return; // already initialized
   audioListener = new THREE.AudioListener();
@@ -219,6 +224,7 @@ async function init() {
 
   // Decorations
   createDecorations();
+  createPortal();
   updateLoading(100, 'Hazır!');
 
   // Events
@@ -1104,6 +1110,29 @@ function animate() {
       bobTime = 0;
     }
 
+    // Portal logic
+    if (portalMesh && portalGroupGlobal && isActive) {
+      // Pulsating effect for the portal
+      portalMesh.material.emissiveIntensity = 0.5 + Math.sin(Date.now() * 0.003) * 0.3; 
+      
+      // Check distance for teleportation
+      const dist = camera.position.distanceTo(portalGroupGlobal.position);
+      if (dist < 1.8 && portalTargetUrl) {
+        // Trigger teleport
+        const target = portalTargetUrl;
+        portalTargetUrl = null; // Prevent double trigger
+        
+        // Visual fade out effect before redirect
+        document.getElementById('start-overlay').classList.remove('hidden');
+        document.getElementById('start-overlay').style.backgroundColor = 'rgba(0,0,0,1)';
+        document.getElementById('start-overlay').innerHTML = '<div style="color:var(--color-accent); font-family:var(--font-serif); font-size:24px;">Işınlanıyor...</div>';
+        
+        setTimeout(() => {
+          window.location.href = target;
+        }, 500);
+      }
+    }
+
     // Crosshair highlight when looking at a painting (interactive hint)
     if (!isMobile && crosshair) {
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -1437,4 +1466,72 @@ function multiplayerLoop() {
 setTimeout(() => {
   initMultiplayer();
   multiplayerLoop();
-}, 1000);
+}, 2000);
+
+// ─── Teleportation Portal ───────────────────────────
+function createPortal() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const targetExhibition = urlParams.get('exhibition');
+  const isSpecial = targetExhibition === 'ozel-koleksiyon';
+  
+  portalTargetUrl = isSpecial ? '3d.html?exhibition=2025-2026' : '3d.html?exhibition=ozel-koleksiyon';
+  const portalTitleText = isSpecial ? '2025-2026 Sergisi' : 'FSFL Özel Koleksiyon';
+
+  const portalGroup = new THREE.Group();
+  portalGroupGlobal = portalGroup; // Store for collision checks
+  
+  // Place at the far end of the room
+  portalGroup.position.set(0, EYE_HEIGHT, -ROOM.depth / 2 + 0.6); 
+
+  // Portal Frame (Obsidian style)
+  const frameGeo = new THREE.BoxGeometry(2.4, 3.4, 0.4);
+  const frameMat = new THREE.MeshStandardMaterial({
+    color: 0x150820, // Extremely dark obsidian
+    roughness: 0.9,
+    metalness: 0.1
+  });
+  const frame = new THREE.Mesh(frameGeo, frameMat);
+  portalGroup.add(frame);
+
+  // Portal Inner (Dark purple)
+  const innerGeo = new THREE.PlaneGeometry(2.0, 3.0);
+  const innerMat = new THREE.MeshStandardMaterial({
+    color: 0x1a0033, // Very dark purple
+    emissive: 0x2a0044, // Slight glow
+    emissiveIntensity: 0.5,
+    side: THREE.DoubleSide
+  });
+  portalMesh = new THREE.Mesh(innerGeo, innerMat);
+  portalMesh.position.z = 0.21; // Slightly in front of frame
+  portalGroup.add(portalMesh);
+  
+  // Portal Light
+  const pLight = new THREE.PointLight(0x3a0055, 1.5, 6);
+  pLight.position.set(0, 0, 1);
+  portalGroup.add(pLight);
+
+  // Floating Text (Gold)
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.font = 'bold 48px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#c9a96e'; // Gold text
+  ctx.fillText('Geçiş: ' + portalTitleText, 512, 128);
+  
+  const textTexture = new THREE.CanvasTexture(canvas);
+  const textMat = new THREE.MeshBasicMaterial({
+    map: textTexture,
+    transparent: true,
+    side: THREE.DoubleSide
+  });
+  const textMesh = new THREE.Mesh(new THREE.PlaneGeometry(4, 1), textMat);
+  textMesh.position.set(0, 2.2, 0.25); // Above portal
+  portalGroup.add(textMesh);
+
+  scene.add(portalGroup);
+}

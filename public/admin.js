@@ -336,6 +336,7 @@
     $('#field-dimensions').value = art.dimensions || '';
     $('#field-year').value = art.year || '';
     $('#field-description').value = art.description || '';
+    $('#field-exhibition').value = art.exhibition || '2025-2026';
 
     // Show existing image
     const imgSrc = art.imageUrl || art.image || '/uploads/' + (art.imagePath || '');
@@ -545,6 +546,7 @@
     formData.append('dimensions',  $('#field-dimensions').value.trim());
     formData.append('year',        $('#field-year').value.trim());
     formData.append('description', $('#field-description').value.trim());
+    formData.append('exhibition',  $('#field-exhibition').value);
 
     setLoading(formSubmitBtn, true);
 

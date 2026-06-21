@@ -264,6 +264,8 @@ app.post('/api/artworks', authMiddleware, submissionUpload, (req, res) => {
       image2: files.image2?.[0] ? `images/${files.image2[0].filename}` : '',
       image3: files.image3?.[0] ? `images/${files.image3[0].filename}` : '',
       description: req.body.description || '',
+      exhibition: req.body.exhibition || '2025-2026',
+      likes: 0,
     };
     artworks.push(newArtwork);
     writeArtworks(artworks);
@@ -293,6 +295,8 @@ app.put('/api/artworks/:id', authMiddleware, submissionUpload, (req, res) => {
       dimensions: req.body.dimensions || existing.dimensions,
       year: req.body.year || existing.year,
       description: req.body.description || existing.description,
+      exhibition: req.body.exhibition || existing.exhibition || '2025-2026',
+      likes: existing.likes || 0,
     };
 
     if (files.image?.[0]) artworks[index].image = `images/${files.image[0].filename}`;

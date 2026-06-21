@@ -92,7 +92,17 @@ async function init() {
   // Fetch artworks
   try {
     const res = await fetch('/api/artworks');
-    artworks = await res.json();
+    const allArtworks = await res.json();
+    
+    // Filter by exhibition if specified in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetExhibition = urlParams.get('exhibition');
+    
+    if (targetExhibition) {
+      artworks = allArtworks.filter(a => (a.exhibition || '2025-2026') === targetExhibition);
+    } else {
+      artworks = allArtworks;
+    }
   } catch {
     artworks = [];
   }
@@ -237,13 +247,26 @@ function createRoom() {
   floor.receiveShadow = true;
   scene.add(floor);
 
-  // Ceiling
+  // Ceiling with Skylight
   const ceilGeo = new THREE.PlaneGeometry(ROOM.width, ROOM.depth);
   const ceilMat = new THREE.MeshStandardMaterial({ color: CEILING_COLOR, roughness: 0.9 });
   const ceil = new THREE.Mesh(ceilGeo, ceilMat);
   ceil.rotation.x = Math.PI / 2;
   ceil.position.y = ROOM.height;
   scene.add(ceil);
+
+  // Architectural Skylight (Fake window)
+  const skyWidth = Math.min(6, ROOM.width * 0.4);
+  const skyDepth = Math.max(10, ROOM.depth * 0.6);
+  const skyGeo = new THREE.PlaneGeometry(skyWidth, skyDepth);
+  const skyMat = new THREE.MeshBasicMaterial({ color: 0x88bbdd, transparent: true, opacity: 0.9 });
+  const skylight = new THREE.Mesh(skyGeo, skyMat);
+  skylight.rotation.x = Math.PI / 2;
+  skylight.position.y = ROOM.height - 0.01;
+  scene.add(skylight);
+
+  // Atmospheric Dust Particles
+  createDust();
 
   // Walls
   const wallMat = new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.85 });
@@ -282,6 +305,29 @@ function createRoom() {
   const rs = ls.clone();
   rs.position.x = ROOM.width / 2 - 0.01;
   scene.add(rs);
+}
+
+// ─── Particles ─────────────────────────────────────
+let dustParticles;
+function createDust() {
+  const particleCount = 300; // Light amount for performance
+  const geo = new THREE.BufferGeometry();
+  const pos = new Float32Array(particleCount * 3);
+  for(let i=0; i<particleCount; i++) {
+    pos[i*3] = (Math.random() - 0.5) * ROOM.width; // x
+    pos[i*3+1] = Math.random() * ROOM.height; // y
+    pos[i*3+2] = (Math.random() - 0.5) * ROOM.depth; // z
+  }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({
+    color: 0xffeebb,
+    size: 0.04,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending
+  });
+  dustParticles = new THREE.Points(geo, mat);
+  scene.add(dustParticles);
 }
 
 // ─── Paintings ─────────────────────────────────────
@@ -884,7 +930,19 @@ function animate() {
     }
   }
 
-  renderer.render(scene, camera);
+    if (dustParticles) {
+      dustParticles.rotation.y += delta * 0.02;
+      const positions = dustParticles.geometry.attributes.position.array;
+      for (let i = 1; i < positions.length; i += 3) {
+        positions[i] -= delta * 0.1; // Fall down slowly
+        if (positions[i] < 0) positions[i] = ROOM.height; // Wrap around
+      }
+      dustParticles.geometry.attributes.position.needsUpdate = true;
+    }
+
+    if (typeof updatePlayers === 'function') updatePlayers();
+
+    renderer.render(scene, camera);
 }
 
 // ─── Start ─────────────────────────────────────────
@@ -1063,11 +1121,22 @@ function updateOnlineCount() {
 
 // Smooth interpolation for other players — called in animate loop
 function updatePlayers() {
+  const time = Date.now() * 0.005;
   otherPlayers.forEach((player) => {
     if (player.targetPos) {
-      player.mesh.position.x += (player.targetPos.x - player.mesh.position.x) * 0.15;
-      player.mesh.position.y += (player.targetPos.y - player.mesh.position.y) * 0.15;
-      player.mesh.position.z += (player.targetPos.z - player.mesh.position.z) * 0.15;
+      const dx = player.targetPos.x - player.mesh.position.x;
+      const dz = player.targetPos.z - player.mesh.position.z;
+      const speed = Math.sqrt(dx*dx + dz*dz);
+      
+      player.mesh.position.x += dx * 0.15;
+      player.mesh.position.z += dz * 0.15;
+      
+      // Bobbing
+      let yTarget = player.targetPos.y;
+      if (speed > 0.01) {
+        yTarget += Math.sin(time) * 0.05;
+      }
+      player.mesh.position.y += (yTarget - player.mesh.position.y) * 0.15;
     }
     if (player.targetRot) {
       // Rotate body to face direction

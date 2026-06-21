@@ -9,8 +9,12 @@ const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const fs = require('fs');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'firca-izleri-secret-key-2026';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'sergi2026';
@@ -422,10 +426,63 @@ app.use((err, req, res, next) => {
   next();
 });
 
-// ─── Start ──────────────────────────────────────────
-app.listen(PORT, () => {
+// ─── Socket.IO — Multiplayer Gallery ────────────────
+const galleryNsp = io.of('/gallery');
+const players = new Map();
+
+const AVATAR_COLORS = [
+  '#c9a96e', '#6ec9a9', '#a96ec9', '#c96e6e',
+  '#6e8fc9', '#c9c16e', '#6ec9c9', '#c96eaa',
+];
+
+galleryNsp.on('connection', (socket) => {
+  const color = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
+  const playerData = {
+    id: socket.id,
+    name: 'Ziyaretçi',
+    color,
+    position: { x: 0, y: 1.65, z: 15 },
+    rotation: { x: 0, y: 0 },
+  };
+
+  // Send existing players to the new player
+  const existingPlayers = [];
+  players.forEach((p) => existingPlayers.push(p));
+  socket.emit('init', { id: socket.id, players: existingPlayers, color });
+
+  // Set name
+  socket.on('set-name', (name) => {
+    playerData.name = (name || 'Ziyaretçi').substring(0, 20);
+    players.set(socket.id, playerData);
+    // Broadcast new player joined
+    socket.broadcast.emit('player-joined', playerData);
+  });
+
+  // Position update
+  socket.on('move', (data) => {
+    if (!players.has(socket.id)) return;
+    playerData.position = data.position;
+    playerData.rotation = data.rotation;
+    players.set(socket.id, playerData);
+    socket.broadcast.emit('player-moved', {
+      id: socket.id,
+      position: data.position,
+      rotation: data.rotation,
+    });
+  });
+
+  // Disconnect
+  socket.on('disconnect', () => {
+    players.delete(socket.id);
+    galleryNsp.emit('player-left', socket.id);
+  });
+});
+
+// ─── Start ────────────────────────────────────────
+server.listen(PORT, () => {
   console.log(`\n🎨 Fırça İzleri Sergisi`);
   console.log(`   Sunucu çalışıyor: http://localhost:${PORT}`);
   console.log(`   Admin paneli:     http://localhost:${PORT}/admin.html`);
+  console.log(`   3D Sanal Tur:     http://localhost:${PORT}/3d.html`);
   console.log(`   API:              http://localhost:${PORT}/api/artworks\n`);
 });

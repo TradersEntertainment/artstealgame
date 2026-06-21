@@ -127,6 +127,32 @@
       font-size: 0.65rem; color: rgba(255,255,255,0.3);
       text-align: right; display: none; line-height: 1.5;
     }
+
+    /* Name Input */
+    .start-name-input {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(201,169,110,0.3);
+      border-radius: 6px; padding: 10px 16px; color: #f5f0e8;
+      font-family: 'Inter', sans-serif; font-size: 0.85rem;
+      text-align: center; width: 220px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .start-name-input::placeholder { color: rgba(255,255,255,0.25); }
+    .start-name-input:focus { border-color: #c9a96e; }
+
+    /* Online Count */
+    #online-count {
+      position: fixed; top: 20px; right: 20px; z-index: 35;
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(12,11,13,0.7); backdrop-filter: blur(8px);
+      padding: 6px 14px; border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.72rem; color: rgba(255,255,255,0.5);
+    }
+    .online-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #4ade80; animation: dotPulse 2s ease infinite;
+    }
+    @keyframes dotPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
   </style>
 </head>
 <body>
@@ -142,11 +168,15 @@
   <div id="start-overlay" class="hidden">
     <div class="start-title">Sanal Galeri</div>
     <div class="start-subtitle">Eserlerin arasında yürüyün ve keşfedin</div>
+    <input type="text" class="start-name-input" id="player-name" placeholder="Adınızı yazın…" maxlength="20" autocomplete="off" />
     <div class="start-keys">
       <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span>
     </div>
     <div class="start-click" id="start-click-text">Tıklayarak başlayın</div>
   </div>
+
+  <!-- Online Count -->
+  <div id="online-count"><span class="online-dot"></span><span id="online-num">1</span> çevrimiçi</div>
 
   <!-- HUD -->
   <div id="hud" style="display:none;">
@@ -189,6 +219,9 @@
     </div>
     <p class="panel-desc" id="panel-desc"></p>
   </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
 
   <!-- Three.js -->
   <script type="importmap">

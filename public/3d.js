@@ -746,3 +746,223 @@ function animate() {
 // ─── Start ─────────────────────────────────────────
 init();
 
+// ─── Multiplayer System ────────────────────────────
+const otherPlayers = new Map(); // id → { mesh, nameSprite, targetPos, targetRot }
+let socket = null;
+let myId = null;
+let myColor = '#c9a96e';
+let lastSendTime = 0;
+const SEND_INTERVAL = 100; // ms between position broadcasts
+
+function initMultiplayer() {
+  if (typeof io === 'undefined') return; // socket.io not loaded
+
+  socket = io('/gallery');
+
+  socket.on('init', (data) => {
+    myId = data.id;
+    myColor = data.color;
+    // Add existing players
+    data.players.forEach((p) => addPlayer(p));
+    updateOnlineCount();
+  });
+
+  socket.on('player-joined', (p) => {
+    addPlayer(p);
+    updateOnlineCount();
+  });
+
+  socket.on('player-moved', (data) => {
+    const player = otherPlayers.get(data.id);
+    if (player) {
+      player.targetPos = data.position;
+      player.targetRot = data.rotation;
+    }
+  });
+
+  socket.on('player-left', (id) => {
+    removePlayer(id);
+    updateOnlineCount();
+  });
+}
+
+function getPlayerName() {
+  const input = document.getElementById('player-name');
+  return (input?.value || '').trim() || 'Ziyaretçi';
+}
+
+function sendName() {
+  if (socket) socket.emit('set-name', getPlayerName());
+}
+
+function sendPosition() {
+  if (!socket || !myId) return;
+  const now = Date.now();
+  if (now - lastSendTime < SEND_INTERVAL) return;
+  lastSendTime = now;
+
+  socket.emit('move', {
+    position: {
+      x: camera.position.x,
+      y: camera.position.y,
+      z: camera.position.z,
+    },
+    rotation: {
+      x: camera.rotation.x,
+      y: camera.rotation.y,
+    },
+  });
+}
+
+function addPlayer(data) {
+  if (data.id === myId) return;
+  if (otherPlayers.has(data.id)) return;
+
+  const color = new THREE.Color(data.color || '#c9a96e');
+  const group = new THREE.Group();
+
+  // Body — capsule shape
+  const bodyGeo = new THREE.CapsuleGeometry(0.22, 0.7, 4, 8);
+  const bodyMat = new THREE.MeshStandardMaterial({ color, roughness: 0.6, metalness: 0.2 });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.position.y = -0.3;
+  group.add(body);
+
+  // Head — sphere
+  const headGeo = new THREE.SphereGeometry(0.18, 8, 8);
+  const headMat = new THREE.MeshStandardMaterial({ color: 0xf5e6d0, roughness: 0.7 });
+  const head = new THREE.Mesh(headGeo, headMat);
+  head.position.y = 0.35;
+  group.add(head);
+
+  // Direction indicator (small nose)
+  const noseGeo = new THREE.ConeGeometry(0.06, 0.12, 4);
+  const noseMat = new THREE.MeshStandardMaterial({ color });
+  const nose = new THREE.Mesh(noseGeo, noseMat);
+  nose.rotation.x = -Math.PI / 2;
+  nose.position.set(0, 0.3, 0.2);
+  group.add(nose);
+
+  // Name plate (canvas texture)
+  const nameSprite = createNameSprite(data.name || 'Ziyaretçi', data.color);
+  nameSprite.position.y = 0.7;
+  group.add(nameSprite);
+
+  // Set initial position
+  group.position.set(
+    data.position?.x || 0,
+    data.position?.y || EYE_HEIGHT,
+    data.position?.z || 15
+  );
+
+  scene.add(group);
+  otherPlayers.set(data.id, {
+    mesh: group,
+    nameSprite,
+    targetPos: data.position || { x: 0, y: EYE_HEIGHT, z: 15 },
+    targetRot: data.rotation || { x: 0, y: 0 },
+  });
+}
+
+function createNameSprite(name, color) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+
+  // Background pill
+  ctx.fillStyle = 'rgba(12, 11, 13, 0.75)';
+  ctx.beginPath();
+  ctx.roundRect(16, 8, 224, 44, 22);
+  ctx.fill();
+
+  // Border
+  ctx.strokeStyle = color || '#c9a96e';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(16, 8, 224, 44, 22);
+  ctx.stroke();
+
+  // Text
+  ctx.fillStyle = '#f5f0e8';
+  ctx.font = '500 20px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(name, 128, 32);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.5, 0.38, 1);
+  return sprite;
+}
+
+function removePlayer(id) {
+  const player = otherPlayers.get(id);
+  if (player) {
+    scene.remove(player.mesh);
+    player.mesh.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (child.material.map) child.material.map.dispose();
+        child.material.dispose();
+      }
+    });
+    otherPlayers.delete(id);
+  }
+}
+
+function updateOnlineCount() {
+  const el = document.getElementById('online-num');
+  if (el) el.textContent = otherPlayers.size + 1;
+}
+
+// Smooth interpolation for other players — called in animate loop
+function updatePlayers() {
+  otherPlayers.forEach((player) => {
+    if (player.targetPos) {
+      player.mesh.position.x += (player.targetPos.x - player.mesh.position.x) * 0.15;
+      player.mesh.position.y += (player.targetPos.y - player.mesh.position.y) * 0.15;
+      player.mesh.position.z += (player.targetPos.z - player.mesh.position.z) * 0.15;
+    }
+    if (player.targetRot) {
+      // Rotate body to face direction
+      const targetY = player.targetRot.y || 0;
+      let diff = targetY - player.mesh.rotation.y;
+      // Shortest path
+      if (diff > Math.PI) diff -= Math.PI * 2;
+      if (diff < -Math.PI) diff += Math.PI * 2;
+      player.mesh.rotation.y += diff * 0.15;
+    }
+    // Nameplate always faces camera
+    if (player.nameSprite) {
+      player.nameSprite.lookAt(camera.position);
+    }
+  });
+}
+
+// Patch: inject multiplayer into the existing flow
+const _origSetupDesktop = typeof setupDesktopEvents === 'function' ? setupDesktopEvents : null;
+const _origSetupMobile = typeof setupMobileEvents === 'function' ? setupMobileEvents : null;
+
+// Hook into start overlay click to send name
+const startOvl = document.getElementById('start-overlay');
+if (startOvl) {
+  startOvl.addEventListener('click', () => sendName(), true);
+  startOvl.addEventListener('touchstart', () => sendName(), true);
+}
+
+// Hook into animate loop — override the existing animate
+const _origAnimate = animate;
+// We can't cleanly override, so we use a secondary loop
+function multiplayerLoop() {
+  requestAnimationFrame(multiplayerLoop);
+  updatePlayers();
+  sendPosition();
+}
+
+// Init multiplayer after a short delay to let everything load
+setTimeout(() => {
+  initMultiplayer();
+  multiplayerLoop();
+}, 1000);

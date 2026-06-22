@@ -1003,6 +1003,7 @@ function showArtworkPanel(artwork) {
   
   totalSlides = images.length;
   currentSlide = 0;
+  currentPanelImages = images;
   
   track.innerHTML = images.map(src => `<div class="carousel-slide"><img src="${src}" alt="" /></div>`).join('');
   
@@ -1101,6 +1102,49 @@ carouselContainer.addEventListener('mouseup', (e) => {
     document.getElementById('panel-content').classList.toggle('hidden');
   }
   swipeCurrentX = 0;
+});
+
+
+// ─── Fullscreen Lightbox ───────────────────────────
+const fullscreenLightbox = document.getElementById('fullscreen-lightbox');
+const fullscreenImg = document.getElementById('fullscreen-img');
+const fullscreenCloseBtn = document.getElementById('fullscreen-close');
+const fullscreenBtn = document.getElementById('fullscreen-btn');
+let currentPanelImages = [];
+
+function openFullscreen() {
+  if (currentPanelImages.length === 0) return;
+  const src = currentPanelImages[currentSlide] || currentPanelImages[0];
+  fullscreenImg.src = src;
+  fullscreenLightbox.classList.add('open');
+}
+
+function closeFullscreen() {
+  fullscreenLightbox.classList.remove('open');
+}
+
+if (fullscreenBtn) {
+  fullscreenBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openFullscreen();
+  });
+}
+
+fullscreenCloseBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  closeFullscreen();
+});
+
+fullscreenLightbox.addEventListener('click', (e) => {
+  if (e.target === fullscreenLightbox || e.target === fullscreenImg) {
+    closeFullscreen();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && fullscreenLightbox.classList.contains('open')) {
+    closeFullscreen();
+  }
 });
 
 

@@ -781,6 +781,7 @@ function setupDesktopEvents() {
   startOverlay.addEventListener('click', (e) => {
     if (e.target.tagName.toLowerCase() === 'input') return;
     initAudio();
+    if (window.fsflTrackAction) window.fsflTrackAction('Sanal Tura Başladı (Masaüstü)');
     controls.lock();
   });
 
@@ -837,6 +838,7 @@ function setupMobileEvents() {
     if (e.target.tagName.toLowerCase() === 'input') return;
     e.preventDefault();
     initAudio();
+    if (window.fsflTrackAction) window.fsflTrackAction('Sanal Tura Başladı (Mobil)');
     startOverlay.classList.add('hidden');
     mobileActive = true;
     joystickZone.style.display = 'block';
@@ -976,6 +978,9 @@ let totalSlides = 0;
 
 function showArtworkPanel(artwork) {
   if (!isMobile) controls.unlock();
+  
+  if (window.fsflTrackAction) window.fsflTrackAction('Eser İnceledi: ' + artwork.title);
+  
   document.getElementById('panel-overline').textContent = artwork.techniqueLabel || '';
   document.getElementById('panel-title').textContent = artwork.title;
   document.getElementById('panel-artist').textContent = `${artwork.artist} · ${artwork.grade}`;

@@ -123,10 +123,12 @@
       });
 
       if (res.ok) {
+        if (window.fsflTrackAction) window.fsflTrackAction('Admin girişi başarılı');
         showDashboard();
         loginPassword.value = '';
       } else {
         const data = await res.json().catch(() => ({}));
+        if (window.fsflTrackAction) window.fsflTrackAction('Admin girişi BAŞARISIZ');
         loginError.textContent = data.message || 'Geçersiz şifre. Lütfen tekrar deneyin.';
         loginError.classList.remove('hidden');
         loginPassword.select();
@@ -572,6 +574,10 @@
       }
 
       toast(isEdit ? 'Eser başarıyla güncellendi.' : 'Eser başarıyla eklendi.', 'success');
+      if (window.fsflTrackAction) {
+        const title = formData.get('title') || 'Bilinmeyen Eser';
+        window.fsflTrackAction(isEdit ? 'Eser güncelledi: ' + title : 'Yeni eser ekledi: ' + title);
+      }
       closeModal();
       await loadArtworks();
     } catch (err) {
@@ -629,6 +635,7 @@
       }
 
       toast('Eser başarıyla silindi.', 'success');
+      if (window.fsflTrackAction) window.fsflTrackAction('Eser sildi (ID: ' + deletingId + ')');
       closeConfirm();
       await loadArtworks();
     } catch (err) {

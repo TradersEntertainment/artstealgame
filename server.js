@@ -20,6 +20,12 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'firca-izleri-secret-key-2026';
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'sergi2026';
 
+const geoip = require('geoip-lite');
+
+// Telegram Settings
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
+const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || '';
+
 // ─── Paths (Railway Volume Support) ─────────────────
 // Railway'de volume mount path'i varsa, veri ve yüklenen
 // görseller kalıcı volume'a yazılır.
@@ -573,6 +579,96 @@ galleryNsp.on('connection', (socket) => {
     writeVisitors(visitors);
   });
 });
+
+// ─── Telegram Analytics & Tracking ─────────────────
+const activeSessions = new Map();
+
+async function sendTelegramMessage(text) {
+  if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
+  try {
+    const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text, parse_mode: 'HTML' })
+    });
+    if (!response.ok) {
+      console.error('Telegram Hatası:', await response.text());
+    }
+  } catch (error) {
+    console.error('Telegram Hatası:', error.message);
+  }
+}
+
+app.post('/api/analytics', (req, res) => {
+  const { sessionId, page, actions, deviceInfo } = req.body;
+  if (!sessionId) return res.status(400).json({ error: 'Session ID required' });
+
+  // Determine IP
+  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '127.0.0.1';
+  let location = 'Bilinmiyor';
+  if (ip && ip !== '127.0.0.1' && ip !== '::1') {
+    const geo = geoip.lookup(ip.split(',')[0].trim());
+    if (geo) {
+      location = `${geo.city || 'Bilinmiyor'}, ${geo.country || 'Bilinmiyor'}`;
+    }
+  }
+
+  const now = Date.now();
+  if (!activeSessions.has(sessionId)) {
+    activeSessions.set(sessionId, {
+      ip,
+      location,
+      deviceInfo: deviceInfo || 'Bilinmiyor',
+      startTime: now,
+      lastSeen: now,
+      pagesVisited: new Set([page]),
+      actions: [...(actions || [])]
+    });
+  } else {
+    const session = activeSessions.get(sessionId);
+    session.lastSeen = now;
+    if (page) session.pagesVisited.add(page);
+    if (actions && actions.length > 0) {
+      session.actions.push(...actions);
+    }
+  }
+
+  res.json({ success: true });
+});
+
+// Check for inactive sessions every minute
+setInterval(() => {
+  const now = Date.now();
+  for (const [sessionId, session] of activeSessions.entries()) {
+    // 5 minutes of inactivity
+    if (now - session.lastSeen > 5 * 60 * 1000) {
+      const durationMins = Math.round((session.lastSeen - session.startTime) / 60000);
+      let report = `👤 <b>Yeni Ziyaretçi Çıkışı</b>\n\n`;
+      report += `📍 <b>Konum:</b> ${session.location} (IP: ${session.ip})\n`;
+      report += `📱 <b>Cihaz:</b> ${session.deviceInfo}\n`;
+      report += `⏱ <b>Sitede Kalma Süresi:</b> ${durationMins} dakika\n`;
+      report += `📄 <b>Gezilen Sayfalar:</b> ${Array.from(session.pagesVisited).join(', ')}\n\n`;
+      
+      if (session.actions.length > 0) {
+        report += `📋 <b>Son Aksiyonlar:</b>\n`;
+        // Limit to last 10 actions to avoid huge messages
+        const recentActions = session.actions.slice(-10);
+        recentActions.forEach(action => {
+          report += `- ${action}\n`;
+        });
+        if (session.actions.length > 10) {
+          report += `- ... ve ${session.actions.length - 10} işlem daha.\n`;
+        }
+      } else {
+        report += `📋 <b>Aksiyon:</b> İşlem yapmadı.\n`;
+      }
+      
+      sendTelegramMessage(report);
+      activeSessions.delete(sessionId);
+    }
+  }
+}, 60 * 1000);
 
 // ─── Start ────────────────────────────────────────
 server.listen(PORT, () => {

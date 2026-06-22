@@ -644,6 +644,15 @@ setInterval(() => {
     // 5 minutes of inactivity
     if (now - session.lastSeen > 5 * 60 * 1000) {
       const durationMins = Math.round((session.lastSeen - session.startTime) / 60000);
+      
+      // --- BOT FILTER ---
+      // If the visitor stayed for 0 minutes and did absolutely nothing, it's a bot/crawler.
+      // Don't spam the Telegram group.
+      if (durationMins < 1 && session.actions.length === 0) {
+        activeSessions.delete(sessionId);
+        continue;
+      }
+
       let report = `👤 <b>Yeni Ziyaretçi Çıkışı</b>\n\n`;
       report += `📍 <b>Konum:</b> ${session.location} (IP: ${session.ip})\n`;
       report += `📱 <b>Cihaz:</b> ${session.deviceInfo}\n`;

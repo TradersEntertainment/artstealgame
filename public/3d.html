@@ -321,15 +321,15 @@
 
   <!-- Loading -->
   <div id="loading-screen">
-    <div class="loading-title">Fırça <em>İzleri</em></div>
+    <div class="loading-title">MUSEUM <em>HEIST</em></div>
     <div class="loading-bar-track"><div class="loading-bar-fill" id="loading-fill"></div></div>
     <div class="loading-text" id="loading-text">Galeri hazırlanıyor…</div>
   </div>
 
   <!-- Start Overlay -->
   <div id="start-overlay" class="hidden">
-    <div class="start-title">Sanal Galeri</div>
-    <div class="start-subtitle">Eserlerin arasında yürüyün ve keşfedin</div>
+    <div class="start-title">MUSEUM HEIST</div>
+    <div class="start-subtitle">Eserleri çal, üssüne getir ve kazan.</div>
     <input type="text" class="start-name-input" id="player-name" placeholder="Adınızı yazın…" maxlength="20" autocomplete="off" />
     <div class="start-keys">
       <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span>
@@ -345,7 +345,10 @@
   <div id="scoreboard">Eser: <span id="score-val">0</span> | Leş: <span id="kill-val">0</span> | Ölüm: <span id="death-val">0</span></div>
   <div id="damage-overlay"></div>
   <div id="interaction-hint">Tabloyu Çalmak için 'E'ye Bas</div>
-  <div id="carry-status" style="display:none; position: fixed; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(200,150,0,0.8); color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: bold; z-index: 30;">Eser Taşıyorsun! Kendi Üssüne Götür!</div>
+  <div id="carry-status" style="display:none; position: fixed; top: 15%; left: 50%; transform: translateX(-50%); background: rgba(200,150,0,0.8); color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: bold; z-index: 30; flex-direction: column; align-items: center; gap: 5px;">
+    <span>Eser Taşıyorsun! Kendi Üssüne Götür!</span>
+    <span id="base-distance-text" style="font-size: 0.8rem; opacity: 0.8;">Üsse Uzaklık: ?</span>
+  </div>
   
   <div id="ammo-container" style="display:none; position: fixed; bottom: 30px; right: 30px; z-index: 35; font-size: 2rem; font-family: 'Inter', sans-serif; font-weight: bold; color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.8);">
     <span id="ammo-current">15</span> / 15

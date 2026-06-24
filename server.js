@@ -553,7 +553,9 @@ galleryNsp.on('connection', (socket) => {
     id: socket.id, 
     players: existingPlayers, 
     color, 
-    stolenPaintings: Array.from(stolenPaintings) 
+    stolenPaintings: Array.from(stolenPaintings),
+    myBaseIndex: baseIndex,
+    bases: BASES
   });
 
   // Set name
@@ -588,13 +590,17 @@ galleryNsp.on('connection', (socket) => {
   });
 
   // Shoot event
-  socket.on('shoot', (targetId) => {
+  socket.on('shoot', (data) => {
+    const targetId = typeof data === 'string' ? data : data.targetId;
+    const isHeadshot = typeof data === 'object' && data.isHeadshot;
+    
     const p = players.get(socket.id);
     const target = players.get(targetId);
     if (!p || p.isDead || !target || target.isDead) return;
     if (Date.now() < target.invincibleUntil) return; // Spawn protection
 
-    target.health -= 25;
+    const damage = isHeadshot ? 50 : 25;
+    target.health -= damage;
     if (target.health <= 0) {
       target.health = 0;
       target.isDead = true;

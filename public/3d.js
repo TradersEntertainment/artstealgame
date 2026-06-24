@@ -1254,6 +1254,16 @@ function animate() {
         if (hint) hint.style.display = 'none';
       }
     }
+    
+    // Update base distance text if carrying
+    if (isCarrying && bases && myBaseIndex !== undefined) {
+      const b = bases[myBaseIndex];
+      const dx = camera.position.x - b.x;
+      const dz = camera.position.z - b.z;
+      const dist = Math.sqrt(dx*dx + dz*dz).toFixed(1);
+      const distEl = document.getElementById('base-distance-text');
+      if (distEl) distEl.innerText = `Üsse Uzaklık: ${dist}m`;
+    }
   }
 
     if (dustParticles) {
@@ -1279,6 +1289,8 @@ const otherPlayers = new Map(); // id → { mesh, nameSprite, targetPos, targetR
 let socket = null;
 let myId = null;
 let myColor = '#c9a96e';
+let myBaseIndex;
+let bases = [];
 let lastSendTime = 0;
 const SEND_INTERVAL = 30; // ms between position broadcasts for smoother movement
 
@@ -1290,6 +1302,18 @@ function initMultiplayer() {
   socket.on('init', (data) => {
     myId = data.id;
     myColor = data.color;
+    myBaseIndex = data.myBaseIndex;
+    bases = data.bases;
+    // Create base visual marker
+    if (bases && myBaseIndex !== undefined) {
+      const b = bases[myBaseIndex];
+      const baseGeo = new THREE.CylinderGeometry(2, 2, 0.1, 32);
+      const baseMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.5 });
+      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
+      baseMesh.position.set(b.x, 0.05, b.z);
+      scene.add(baseMesh);
+    }
+
     // Add existing players
     data.players.forEach((p) => addPlayer(p));
     updateOnlineCount();
@@ -1417,7 +1441,6 @@ let isSprinting = false;
 
 window.addEventListener('mousedown', (e) => {
   if (!controls || !controls.isLocked || isDead) return;
-  if (isCarrying) return; // Cannot shoot while carrying
 
   if (e.button === 0) {
     if (isReloading) return;
@@ -1434,12 +1457,20 @@ window.addEventListener('mousedown', (e) => {
     const hits = raycaster.intersectObjects(playerMeshes, true);
     
     let hitSuccess = false;
+    let isHeadshot = false;
+
     if (hits.length > 0) {
+      const hitPoint = hits[0].point;
       for (const [id, player] of otherPlayers.entries()) {
         let hitObj = hits[0].object;
         while(hitObj) {
           if (hitObj === player.mesh) {
-            socket.emit('shoot', id);
+            // Check if headshot (rough estimation based on hit height relative to player pos)
+            // Player Y is at floor level (0), head is around 1.3 to 1.6
+            if (hitPoint.y - player.targetPos.y > 1.2) {
+              isHeadshot = true;
+            }
+            socket.emit('shoot', { targetId: id, isHeadshot });
             hitSuccess = true;
             break;
           }
@@ -1451,6 +1482,8 @@ window.addEventListener('mousedown', (e) => {
     if (hitSuccess) {
       const hm = document.getElementById('hit-marker');
       hm.style.display = 'block';
+      hm.style.color = isHeadshot ? '#ef4444' : 'rgba(255,255,255,0.8)';
+      hm.innerText = isHeadshot ? '☠' : '✕';
       setTimeout(() => hm.style.display = 'none', 100);
     }
 

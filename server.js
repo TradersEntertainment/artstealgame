@@ -520,10 +520,10 @@ const AVATAR_COLORS = [
 ];
 
 const BASES = [
-  { x: 0, y: 1.65, z: 15 },
-  { x: 0, y: 1.65, z: -15 },
-  { x: 22, y: 1.65, z: 15 },
-  { x: 22, y: 1.65, z: -15 }
+  { x: -18, y: 1.65, z: -18 },
+  { x: 18, y: 1.65, z: 18 },
+  { x: -18, y: 1.65, z: 18 },
+  { x: 18, y: 1.65, z: -18 }
 ];
 
 galleryNsp.on('connection', (socket) => {

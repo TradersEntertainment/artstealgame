@@ -9,7 +9,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import * as SkeletonUtils from 'three/addons/utils/SkeletonUtils.js';
 
 // ─── Config ────────────────────────────────────────
-const ROOM = { width: 28, height: 5, depth: 40 };
+const ROOM = { width: 46, height: 6, depth: 46 };
 const WALL_COLOR = 0xf5f0e8;
 const FLOOR_COLOR = 0x3d2b1f;
 const CEILING_COLOR = 0xe8e0d0;
@@ -74,6 +74,9 @@ let artworks = [];
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(0, 0);
 
+let baseArrow = null;
+const baseVisualMeshes = [];
+
 // ─── Mobile Detection ──────────────────────────────
 const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1);
 let mobileActive = false;
@@ -103,40 +106,8 @@ const joystickBase = document.getElementById('joystick-base');
 const mobileHint = document.getElementById('mobile-hint');
 
 // ─── Room Size Calculator ──────────────────────────
-function getSpacing(count) {
-  // Tighter spacing for larger collections
-  if (count <= 8) return 4.5;
-  if (count <= 15) return 4.0;
-  if (count <= 25) return 3.5;
-  return 3.0;
-}
-
-const CORRIDOR_WIDTH = 12;
-const CORRIDOR_DEPTH = 10;
-let ROOM_OFFSET_X = 0;
 let mainArtworks = [];
 let specialArtworks = [];
-
-function calculateRoom(count1, count2) {
-  const maxCount = Math.max(count1, count2, 1);
-  if (maxCount === 0) { ROOM.width = 18; ROOM.depth = 15; return; }
-
-  const spacing = getSpacing(maxCount);
-
-  // Use 4 walls for large collections
-  const useAllWalls = maxCount > 12;
-  const wallCount = useAllWalls ? 4 : (maxCount > 2 ? 3 : 2);
-  const perWall = Math.ceil(maxCount / wallCount);
-  const sidePerWall = Math.ceil(maxCount / wallCount);
-  
-  const neededDepth = Math.max(15, (sidePerWall + 1) * spacing + 4);
-  ROOM.depth = Math.min(70, neededDepth);
-
-  const neededWidth = Math.max(18, (perWall + 1) * spacing + 4);
-  ROOM.width = Math.min(50, neededWidth);
-
-  ROOM_OFFSET_X = ROOM.width + CORRIDOR_WIDTH;
-}
 
 // ─── Init ──────────────────────────────────────────
 let sharedPlayerModel = null;
@@ -172,9 +143,6 @@ async function init() {
     artworks = []; mainArtworks = []; specialArtworks = [];
   }
 
-  // Dynamic room sizing
-  calculateRoom(mainArtworks.length, specialArtworks.length);
-
   loadPlayerModel();
 
   updateLoading(10, 'Sahne oluşturuluyor…');
@@ -203,13 +171,8 @@ async function init() {
   
   scene.add(camera);
   
-  const urlParams = new URLSearchParams(window.location.search);
-  const targetExhibition = urlParams.get('exhibition');
-  if (targetExhibition === 'ozel-koleksiyon') {
-    camera.position.set(ROOM_OFFSET_X, EYE_HEIGHT, ROOM.depth / 2 - 3);
-  } else {
-    camera.position.set(0, EYE_HEIGHT, ROOM.depth / 2 - 3);
-  }
+  // Default camera position before we receive spawn base from server
+  camera.position.set(0, EYE_HEIGHT, 0);
 
   // Renderer
   renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -225,20 +188,17 @@ async function init() {
   controls = new PointerLockControls(camera, document.body);
   createLights();
 
-  updateLoading(30, 'Odalar inşa ediliyor…');
-  createRoom(0, true);
-  createRoom(ROOM_OFFSET_X, false);
-  createCorridor();
+  updateLoading(30, 'Müze inşa ediliyor…');
+  createArena();
   createSkybox();
   createDust();
 
   updateLoading(50, 'Eserler asılıyor…');
-  await createPaintings(mainArtworks, 0);
-  await createPaintings(specialArtworks, ROOM_OFFSET_X);
+  const allArtworks = [...mainArtworks, ...specialArtworks];
+  await createPaintings(allArtworks);
 
   updateLoading(90, 'Son rötuşlar…');
-  createDecorations(0);
-  createDecorations(ROOM_OFFSET_X);
+  createDecorations();
 
   updateLoading(100, 'Hazır!');
 
@@ -264,39 +224,32 @@ function updateLoading(pct, text) {
   loadingText.textContent = text;
 }
 
-// ─── Lights ────────────────────────────────────────
-let spotlightCount = 0;
-
 function createLights() {
   // Ambient — darker for heist
   scene.add(new THREE.AmbientLight(0x101520, 0.02));
 
-  // Multiple ceiling lights spread across both rooms (dim red/orange)
-  const lightsX = Math.max(1, Math.ceil(ROOM.width / 16));
-  const lightsZ = Math.max(1, Math.ceil(ROOM.depth / 16));
+  // Ceiling lights spread (dim red/orange)
+  const lightsX = 3;
+  const lightsZ = 3;
   
-  [0, ROOM_OFFSET_X].forEach(offsetX => {
-    for (let ix = 0; ix < lightsX; ix++) {
-      for (let iz = 0; iz < lightsZ; iz++) {
-        const px = offsetX + (ix / Math.max(1, lightsX - 1) - 0.5) * (ROOM.width * 0.7);
-        const pz = (iz / Math.max(1, lightsZ - 1) - 0.5) * (ROOM.depth * 0.7);
-        const light = new THREE.PointLight(0xff5533, 0.05, ROOM.depth);
-        light.position.set(lightsX === 1 ? offsetX : px, ROOM.height - 0.5, lightsZ === 1 ? 0 : pz);
-        scene.add(light);
-      }
+  for (let ix = 0; ix < lightsX; ix++) {
+    for (let iz = 0; iz < lightsZ; iz++) {
+      const px = (ix / (lightsX - 1) - 0.5) * (ROOM.width * 0.7);
+      const pz = (iz / (lightsZ - 1) - 0.5) * (ROOM.depth * 0.7);
+      const light = new THREE.PointLight(0xff5533, 0.08, ROOM.depth);
+      light.position.set(px, ROOM.height - 0.5, pz);
+      scene.add(light);
     }
-  });
-
-  // Corridor light
-  const cLight = new THREE.PointLight(0xff5533, 0.1, 20);
-  cLight.position.set(ROOM_OFFSET_X / 2, ROOM.height - 0.5, 0);
-  scene.add(cLight);
+  }
 }
 
-function addPaintingSpotlight(x, y, z, targetX, targetZ) {
-    const light = new THREE.PointLight(0xfff5e6, 0.05, 5); // Very dim
-    light.position.set(x, y, z);
-    scene.add(light);
+function addPaintingSpotlight(x, y, z, rotY) {
+  // Spawn a dim point light in front of the painting
+  const dirX = Math.sin(rotY);
+  const dirZ = Math.cos(rotY);
+  const light = new THREE.PointLight(0xfff5e6, 0.15, 6);
+  light.position.set(x + dirX * 1.5, y + 0.5, z + dirZ * 1.5);
+  scene.add(light);
 }
 
 // ─── Minecraft Glass Texture Generator ─────────────
@@ -334,10 +287,8 @@ function createMinecraftGlassTexture() {
   return tex;
 }
 
-// ─── Room ──────────────────────────────────────────
-function createRoom(offsetX, isRoom1) {
-  const texLoader = new THREE.TextureLoader();
-
+// ─── Arena ──────────────────────────────────────────
+function createArena() {
   // Floor (Reflective Marble Effect)
   const floorGeo = new THREE.PlaneGeometry(ROOM.width, ROOM.depth);
   const floorReflector = new Reflector(floorGeo, {
@@ -347,7 +298,7 @@ function createRoom(offsetX, isRoom1) {
     color: 0x889999,
   });
   floorReflector.rotation.x = -Math.PI / 2;
-  floorReflector.position.x = offsetX;
+  floorReflector.position.set(0, 0, 0);
   scene.add(floorReflector);
 
   const floorMat = new THREE.MeshStandardMaterial({
@@ -355,28 +306,28 @@ function createRoom(offsetX, isRoom1) {
   });
   const floor = new THREE.Mesh(floorGeo, floorMat);
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(offsetX, 0.01, 0);
+  floor.position.set(0, 0.01, 0);
   floor.receiveShadow = true;
   scene.add(floor);
 
-  // Ceiling with Massive Deep Recessed Skylight
+  // Ceiling with Skylight
   const ceilMat = new THREE.MeshStandardMaterial({ color: CEILING_COLOR, roughness: 0.9 });
-  const holeWidth = ROOM.width * 0.40;
-  const holeDepth = ROOM.depth * 0.40;
+  const holeWidth = ROOM.width * 0.45;
+  const holeDepth = ROOM.depth * 0.45;
   const ceilZLen = (ROOM.depth - holeDepth) / 2;
 
   const ceil1 = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.width, ceilZLen), ceilMat);
-  ceil1.rotation.x = Math.PI / 2; ceil1.position.set(offsetX, ROOM.height, -ROOM.depth/2 + ceilZLen/2); scene.add(ceil1);
+  ceil1.rotation.x = Math.PI / 2; ceil1.position.set(0, ROOM.height, -ROOM.depth/2 + ceilZLen/2); scene.add(ceil1);
 
   const ceil2 = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.width, ceilZLen), ceilMat);
-  ceil2.rotation.x = Math.PI / 2; ceil2.position.set(offsetX, ROOM.height, ROOM.depth/2 - ceilZLen/2); scene.add(ceil2);
+  ceil2.rotation.x = Math.PI / 2; ceil2.position.set(0, ROOM.height, ROOM.depth/2 - ceilZLen/2); scene.add(ceil2);
 
   const ceilXLen = (ROOM.width - holeWidth) / 2;
   const ceil3 = new THREE.Mesh(new THREE.PlaneGeometry(ceilXLen, holeDepth), ceilMat);
-  ceil3.rotation.x = Math.PI / 2; ceil3.position.set(offsetX - ROOM.width/2 + ceilXLen/2, ROOM.height, 0); scene.add(ceil3);
+  ceil3.rotation.x = Math.PI / 2; ceil3.position.set(-ROOM.width/2 + ceilXLen/2, ROOM.height, 0); scene.add(ceil3);
 
   const ceil4 = new THREE.Mesh(new THREE.PlaneGeometry(ceilXLen, holeDepth), ceilMat);
-  ceil4.rotation.x = Math.PI / 2; ceil4.position.set(offsetX + ROOM.width/2 - ceilXLen/2, ROOM.height, 0); scene.add(ceil4);
+  ceil4.rotation.x = Math.PI / 2; ceil4.position.set(ROOM.width/2 - ceilXLen/2, ROOM.height, 0); scene.add(ceil4);
 
   // Skylight Glass
   const mcGlassTex = createMinecraftGlassTexture();
@@ -384,7 +335,7 @@ function createRoom(offsetX, isRoom1) {
   const glassGeo = new THREE.PlaneGeometry(holeWidth, holeDepth);
   const glassMat = new THREE.MeshBasicMaterial({ map: mcGlassTex, transparent: true, opacity: 0.3, side: THREE.DoubleSide });
   const glassPane = new THREE.Mesh(glassGeo, glassMat);
-  glassPane.rotation.x = Math.PI / 2; glassPane.position.set(offsetX, ROOM.height, 0); scene.add(glassPane);
+  glassPane.rotation.x = Math.PI / 2; glassPane.position.set(0, ROOM.height, 0); scene.add(glassPane);
 
   // Walls
   const wallMat = new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.85 });
@@ -392,151 +343,77 @@ function createRoom(offsetX, isRoom1) {
   const skirtH = 0.12;
 
   // Left wall
-  if (isRoom1) {
-    const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.depth, ROOM.height), wallMat);
-    leftWall.position.set(offsetX - ROOM.width / 2, ROOM.height / 2, 0);
-    leftWall.rotation.y = Math.PI / 2; scene.add(leftWall);
-
-    const ls = new THREE.Mesh(new THREE.BoxGeometry(0.02, skirtH, ROOM.depth), skirtMat);
-    ls.position.set(offsetX - ROOM.width / 2 + 0.01, skirtH / 2, 0); scene.add(ls);
-  } else {
-    // Room 2 left wall has a hole for the corridor
-    const w = (ROOM.depth - CORRIDOR_DEPTH) / 2;
-    const w1 = new THREE.Mesh(new THREE.PlaneGeometry(w, ROOM.height), wallMat);
-    w1.position.set(offsetX - ROOM.width / 2, ROOM.height / 2, -ROOM.depth/2 + w/2);
-    w1.rotation.y = Math.PI / 2; scene.add(w1);
-
-    const w2 = new THREE.Mesh(new THREE.PlaneGeometry(w, ROOM.height), wallMat);
-    w2.position.set(offsetX - ROOM.width / 2, ROOM.height / 2, ROOM.depth/2 - w/2);
-    w2.rotation.y = Math.PI / 2; scene.add(w2);
-  }
+  const leftWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.depth, ROOM.height), wallMat);
+  leftWall.position.set(-ROOM.width / 2, ROOM.height / 2, 0);
+  leftWall.rotation.y = Math.PI / 2; scene.add(leftWall);
+  const ls = new THREE.Mesh(new THREE.BoxGeometry(0.02, skirtH, ROOM.depth), skirtMat);
+  ls.position.set(-ROOM.width / 2 + 0.01, skirtH / 2, 0); scene.add(ls);
 
   // Right wall
-  if (!isRoom1) {
-    const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.depth, ROOM.height), wallMat);
-    rightWall.position.set(offsetX + ROOM.width / 2, ROOM.height / 2, 0);
-    rightWall.rotation.y = -Math.PI / 2; scene.add(rightWall);
-
-    const rs = new THREE.Mesh(new THREE.BoxGeometry(0.02, skirtH, ROOM.depth), skirtMat);
-    rs.position.set(offsetX + ROOM.width / 2 - 0.01, skirtH / 2, 0); scene.add(rs);
-  } else {
-    // Room 1 right wall has a hole for the corridor
-    const w = (ROOM.depth - CORRIDOR_DEPTH) / 2;
-    const w1 = new THREE.Mesh(new THREE.PlaneGeometry(w, ROOM.height), wallMat);
-    w1.position.set(offsetX + ROOM.width / 2, ROOM.height / 2, -ROOM.depth/2 + w/2);
-    w1.rotation.y = -Math.PI / 2; scene.add(w1);
-
-    const w2 = new THREE.Mesh(new THREE.PlaneGeometry(w, ROOM.height), wallMat);
-    w2.position.set(offsetX + ROOM.width / 2, ROOM.height / 2, ROOM.depth/2 - w/2);
-    w2.rotation.y = -Math.PI / 2; scene.add(w2);
-  }
+  const rightWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.depth, ROOM.height), wallMat);
+  rightWall.position.set(ROOM.width / 2, ROOM.height / 2, 0);
+  rightWall.rotation.y = -Math.PI / 2; scene.add(rightWall);
+  const rs = new THREE.Mesh(new THREE.BoxGeometry(0.02, skirtH, ROOM.depth), skirtMat);
+  rs.position.set(ROOM.width / 2 - 0.01, skirtH / 2, 0); scene.add(rs);
 
   // Back wall
   const backWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.width, ROOM.height), wallMat);
-  backWall.position.set(offsetX, ROOM.height / 2, -ROOM.depth / 2); scene.add(backWall);
+  backWall.position.set(0, ROOM.height / 2, -ROOM.depth / 2); scene.add(backWall);
 
   // Front wall
   const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM.width, ROOM.height), wallMat);
-  frontWall.position.set(offsetX, ROOM.height / 2, ROOM.depth / 2);
+  frontWall.position.set(0, ROOM.height / 2, ROOM.depth / 2);
   frontWall.rotation.y = Math.PI; scene.add(frontWall);
-}
 
-function createCorridor() {
-  const wallMat = new THREE.MeshStandardMaterial({ color: WALL_COLOR, roughness: 0.85 });
-  const floorMat = new THREE.MeshStandardMaterial({ color: FLOOR_COLOR, roughness: 0.2, metalness: 0.1 });
-  const ceilMat = new THREE.MeshStandardMaterial({ color: CEILING_COLOR, roughness: 0.9 });
+  // Central Exhibit Partitions
+  const partitions = [
+    { x: 0, z: -8, rotY: 0 },
+    { x: 0, z: 8, rotY: 0 },
+    { x: -8, z: 0, rotY: Math.PI / 2 },
+    { x: 8, z: 0, rotY: Math.PI / 2 }
+  ];
   
-  const midX = ROOM_OFFSET_X / 2;
-  // Floor
-  const floor = new THREE.Mesh(new THREE.PlaneGeometry(CORRIDOR_WIDTH, CORRIDOR_DEPTH), floorMat);
-  floor.rotation.x = -Math.PI / 2; floor.position.set(midX, 0.01, 0); scene.add(floor);
+  const partitionMat = new THREE.MeshStandardMaterial({ color: 0xe8e0d0, roughness: 0.8 });
+  const partitionBaseMat = new THREE.MeshStandardMaterial({ color: 0x2c2420, roughness: 0.6 });
+  const partitionGeo = new THREE.BoxGeometry(8, 3.5, 0.4);
   
-  // Ceil
-  const ceil = new THREE.Mesh(new THREE.PlaneGeometry(CORRIDOR_WIDTH, CORRIDOR_DEPTH), ceilMat);
-  ceil.rotation.x = Math.PI / 2; ceil.position.set(midX, ROOM.height, 0); scene.add(ceil);
-
-  // Front wall of corridor
-  const fw = new THREE.Mesh(new THREE.PlaneGeometry(CORRIDOR_WIDTH, ROOM.height), wallMat);
-  fw.position.set(midX, ROOM.height/2, CORRIDOR_DEPTH/2); fw.rotation.y = Math.PI; scene.add(fw);
-  
-  // Back wall of corridor
-  const bw = new THREE.Mesh(new THREE.PlaneGeometry(CORRIDOR_WIDTH, ROOM.height), wallMat);
-  bw.position.set(midX, ROOM.height/2, -CORRIDOR_DEPTH/2); scene.add(bw);
-
-  // ─── Corridor Signs ───
-  function createSign(text, isRightArrow) {
-    const canvas = document.createElement('canvas');
-    canvas.width = 1024;
-    canvas.height = 256;
-    const ctx = canvas.getContext('2d');
+  partitions.forEach((p) => {
+    const wall = new THREE.Mesh(partitionGeo, partitionMat);
+    wall.position.set(p.x, 1.75, p.z);
+    wall.rotation.y = p.rotY;
+    wall.castShadow = true;
+    wall.receiveShadow = true;
+    scene.add(wall);
     
-    // Transparent background for wall-painted look
-    ctx.clearRect(0, 0, 1024, 256);
-    
-    // Elegant, flat black text
-    ctx.fillStyle = '#1a1a1a';
-    ctx.font = 'normal 70px "Times New Roman", serif'; // Daha şık ve ince bir görünüm
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    
-    // Draw text and elegant thin arrows
-    // ⟶ and ⟵ are more elegant than thick arrows
-    const arrow = isRightArrow ? '⟶' : '⟵';
-    const displayText = isRightArrow ? `${text}  ${arrow}` : `${arrow}  ${text}`;
-    ctx.fillText(displayText, 512, 128);
-
-    const tex = new THREE.CanvasTexture(canvas);
-    // Transparent material
-    const mat = new THREE.MeshStandardMaterial({ 
-      map: tex, 
-      transparent: true,
-      roughness: 0.8,
-      depthWrite: false // prevents z-fighting issues with the wall
-    });
-    const geo = new THREE.PlaneGeometry(6, 1.5);
-    return new THREE.Mesh(geo, mat);
-  }
-
-  // Sign on Back Wall (Z = -CORRIDOR_DEPTH/2)
-  const signBack = createSign('FSFL Özel Koleksiyon', true);
-  // Extremely close to wall (0.01) to look painted
-  signBack.position.set(midX, EYE_HEIGHT + 0.5, -CORRIDOR_DEPTH/2 + 0.01);
-  scene.add(signBack);
-
-  // Let's verify: Stand in corridor. Look at Front Wall (+Z).
-  // +X (Room 2) is on your left.
-  // -X (Room 1) is on your right.
-  // So the Front Wall sign should be: `2025-2026 Sergisi ➔`
-  const signFront = createSign('2025-2026 Sergisi', true);
-  signFront.position.set(midX, EYE_HEIGHT + 0.5, CORRIDOR_DEPTH/2 - 0.05);
-  signFront.rotation.y = Math.PI; // Face inward
-  scene.add(signFront);
+    const baseMesh = new THREE.Mesh(new THREE.BoxGeometry(8.2, 0.1, 0.5), partitionBaseMat);
+    baseMesh.position.set(0, -1.7, 0);
+    wall.add(baseMesh);
+  });
 }
 
 function createSkybox() {
   const texLoader = new THREE.TextureLoader();
-  const skyWidth = (ROOM.width * 2 + CORRIDOR_WIDTH) * 3.0; // 500% scale essentially
-  const skyDepth = ROOM.depth * 5.0;
+  const skyWidth = ROOM.width * 3.0;
+  const skyDepth = ROOM.depth * 3.0;
   const skyTex = texLoader.load('images/starry_sky_ai.png');
   skyTex.colorSpace = THREE.SRGBColorSpace;
   skyTex.wrapS = THREE.MirroredRepeatWrapping;
   skyTex.wrapT = THREE.MirroredRepeatWrapping;
-  skyTex.repeat.set(15, 15); // scaled up for massive sky
+  skyTex.repeat.set(15, 15);
   
   const skyGeo = new THREE.PlaneGeometry(skyWidth, skyDepth);
-  const midX = ROOM_OFFSET_X / 2;
   
   const skylightBase = new THREE.Mesh(skyGeo, new THREE.MeshBasicMaterial({ map: skyTex, color: 0x444455 }));
-  skylightBase.rotation.x = Math.PI / 2; skylightBase.position.set(midX, ROOM.height + 3.5, 0); scene.add(skylightBase);
+  skylightBase.rotation.x = Math.PI / 2; skylightBase.position.set(0, ROOM.height + 3.5, 0); scene.add(skylightBase);
 
   const skylightGlow = new THREE.Mesh(skyGeo, new THREE.MeshBasicMaterial({ map: skyTex, color: 0xffeebb, blending: THREE.AdditiveBlending, transparent: true, opacity: 0.45 }));
-  skylightGlow.rotation.x = Math.PI / 2; skylightGlow.position.set(midX, ROOM.height + 3.49, 0); scene.add(skylightGlow);
+  skylightGlow.rotation.x = Math.PI / 2; skylightGlow.position.set(0, ROOM.height + 3.49, 0); scene.add(skylightGlow);
 }
 
 // ─── Particles ─────────────────────────────────────
 let dustParticles;
 function createDust() {
-  const particleCount = 100; // Even lighter amount for subtle effect
+  const particleCount = 100;
   const geo = new THREE.BufferGeometry();
   const pos = new Float32Array(particleCount * 3);
   for(let i=0; i<particleCount; i++) {
@@ -557,57 +434,51 @@ function createDust() {
 }
 
 // ─── Paintings ─────────────────────────────────────
-async function createPaintings(list, offsetX) {
+const PAINTING_SLOTS = [
+  // Outer Back Wall (Z = -22.5, facing Z+)
+  { x: -12, y: 1.8, z: -22.45, rotY: 0 },
+  { x: 0, y: 1.8, z: -22.45, rotY: 0 },
+  { x: 12, y: 1.8, z: -22.45, rotY: 0 },
+
+  // Outer Front Wall (Z = 22.5, facing Z-)
+  { x: -12, y: 1.8, z: 22.45, rotY: Math.PI },
+  { x: 0, y: 1.8, z: 22.45, rotY: Math.PI },
+  { x: 12, y: 1.8, z: 22.45, rotY: Math.PI },
+
+  // Outer Left Wall (X = -22.5, facing X+)
+  { x: -22.45, y: 1.8, z: -12, rotY: Math.PI / 2 },
+  { x: -22.45, y: 1.8, z: 0, rotY: Math.PI / 2 },
+  { x: -22.45, y: 1.8, z: 12, rotY: Math.PI / 2 },
+
+  // Outer Right Wall (X = 22.5, facing X-)
+  { x: 22.45, y: 1.8, z: -12, rotY: -Math.PI / 2 },
+  { x: 22.45, y: 1.8, z: 0, rotY: -Math.PI / 2 },
+  { x: 22.45, y: 1.8, z: 12, rotY: -Math.PI / 2 },
+
+  // Central Partitions
+  // Partition North
+  { x: 0, y: 1.8, z: -7.75, rotY: 0 },
+  { x: 0, y: 1.8, z: -8.25, rotY: Math.PI },
+  // Partition South
+  { x: 0, y: 1.8, z: 8.25, rotY: 0 },
+  { x: 0, y: 1.8, z: 7.75, rotY: Math.PI },
+  // Partition West
+  { x: -7.75, y: 1.8, z: 0, rotY: Math.PI / 2 },
+  { x: -8.25, y: 1.8, z: 0, rotY: -Math.PI / 2 },
+  // Partition East
+  { x: 8.25, y: 1.8, z: 0, rotY: Math.PI / 2 },
+  { x: 7.75, y: 1.8, z: 0, rotY: -Math.PI / 2 }
+];
+
+async function createPaintings(list) {
   const loader = new THREE.TextureLoader();
-  const count = list.length;
+  const count = Math.min(list.length, PAINTING_SLOTS.length);
   if (count === 0) return;
-  const spacing = getSpacing(count);
 
-  // ── Wall assignment plan ──
-  const sideCapacity = Math.max(1, Math.floor((ROOM.depth - 4) / spacing));
-  const widthCapacity = Math.max(1, Math.floor((ROOM.width - 4) / spacing));
-  const frontCapacity = Math.max(0, Math.floor((ROOM.width - 8) / spacing)); 
-
-  let leftCount, rightCount, backCount, frontCount = 0;
-  if (count <= 2) {
-    leftCount = 1;
-    rightCount = count > 1 ? 1 : 0;
-    backCount = 0;
-  } else if (count <= 4) {
-    backCount = 1;
-    leftCount = Math.ceil((count - 1) / 2);
-    rightCount = count - 1 - leftCount;
-  } else if (count <= 12) {
-    backCount = Math.min(widthCapacity, Math.max(1, Math.floor(count / 3)));
-    const sideTotal = count - backCount;
-    leftCount = Math.ceil(sideTotal / 2);
-    rightCount = sideTotal - leftCount;
-  } else {
-    const perWall = Math.ceil(count / 4);
-    leftCount = Math.min(sideCapacity, perWall);
-    rightCount = Math.min(sideCapacity, perWall);
-    backCount = Math.min(widthCapacity, perWall);
-    frontCount = Math.min(frontCapacity, count - leftCount - rightCount - backCount);
-    let remaining = count - leftCount - rightCount - backCount - frontCount;
-    while (remaining > 0) {
-      if (leftCount < sideCapacity) { leftCount++; remaining--; }
-      if (remaining > 0 && rightCount < sideCapacity) { rightCount++; remaining--; }
-      if (remaining > 0 && backCount < widthCapacity) { backCount++; remaining--; }
-      if (remaining <= 0) break;
-      break;
-    }
-  }
-
-  const placements = [];
-  let artIdx = 0;
-  for (let i = 0; i < leftCount; i++) placements.push({ wall: 'left', idx: i, total: leftCount, artIdx: artIdx++ });
-  for (let i = 0; i < rightCount; i++) placements.push({ wall: 'right', idx: i, total: rightCount, artIdx: artIdx++ });
-  for (let i = 0; i < backCount; i++) placements.push({ wall: 'back', idx: i, total: backCount, artIdx: artIdx++ });
-  for (let i = 0; i < frontCount; i++) placements.push({ wall: 'front', idx: i, total: frontCount, artIdx: artIdx++ });
-
-  for (const p of placements) {
-    const artwork = list[p.artIdx];
-    if (!artwork) continue;
+  for (let i = 0; i < count; i++) {
+    const artwork = list[i];
+    const slot = PAINTING_SLOTS[i];
+    if (!artwork || !slot) continue;
 
     await new Promise((resolve) => {
       loader.load(
@@ -639,43 +510,18 @@ async function createPaintings(list, offsetX) {
           // Name plate
           createNamePlate(group, artwork, pw);
 
-          let startZ = -(p.total - 1) * spacing / 2;
-          let z = startZ + p.idx * spacing;
-          let startX = -(p.total - 1) * spacing / 2;
-          let x = startX + p.idx * spacing;
-
-          // Push artworks out of the corridor hole
-          const isHoleRight = (offsetX === 0 && p.wall === 'right');
-          const isHoleLeft = (offsetX !== 0 && p.wall === 'left');
-          if ((isHoleRight || isHoleLeft) && Math.abs(z) < (CORRIDOR_DEPTH/2 + pw/2 + 0.5)) {
-            z = (z < 0) ? -CORRIDOR_DEPTH/2 - pw/2 - 0.5 : CORRIDOR_DEPTH/2 + pw/2 + 0.5;
-          }
-
-          if (p.wall === 'left') {
-            group.position.set(offsetX - ROOM.width / 2 + 0.05, EYE_HEIGHT + 0.2, z);
-            group.rotation.y = Math.PI / 2;
-            addPaintingSpotlight(offsetX - ROOM.width / 2 + 2, ROOM.height - 0.3, z, offsetX - ROOM.width / 2, z);
-          } else if (p.wall === 'right') {
-            group.position.set(offsetX + ROOM.width / 2 - 0.05, EYE_HEIGHT + 0.2, z);
-            group.rotation.y = -Math.PI / 2;
-            addPaintingSpotlight(offsetX + ROOM.width / 2 - 2, ROOM.height - 0.3, z, offsetX + ROOM.width / 2, z);
-          } else if (p.wall === 'back') {
-            group.position.set(offsetX + x, EYE_HEIGHT + 0.2, -ROOM.depth / 2 + 0.05);
-            group.rotation.y = 0;
-            addPaintingSpotlight(offsetX + x, ROOM.height - 0.3, -ROOM.depth / 2 + 2, offsetX + x, -ROOM.depth / 2);
-          } else if (p.wall === 'front') {
-            group.position.set(offsetX + x, EYE_HEIGHT + 0.2, ROOM.depth / 2 - 0.05);
-            group.rotation.y = Math.PI;
-            addPaintingSpotlight(offsetX + x, ROOM.height - 0.3, ROOM.depth / 2 - 2, offsetX + x, ROOM.depth / 2);
-          }
+          group.position.set(slot.x, slot.y + 0.2, slot.z);
+          group.rotation.y = slot.rotY;
 
           scene.add(group);
+
+          addPaintingSpotlight(slot.x, slot.y, slot.z, slot.rotY);
 
           // Store for raycasting
           canvasMesh.userData = { artworkId: artwork.id, artwork };
           paintingMeshes.push(canvasMesh);
 
-          updateLoading(50 + Math.round(40 * (p.artIdx + 1) / count), `Eser asılıyor: ${p.artIdx + 1}/${count}`);
+          updateLoading(50 + Math.round(40 * (i + 1) / count), `Eser asılıyor: ${i + 1}/${count}`);
           resolve();
         },
         undefined,
@@ -715,9 +561,35 @@ function createNamePlate(group, artwork, paintingWidth) {
 }
 
 // ─── Decorations ───────────────────────────────────
-function createDecorations(offsetX) {
-  // Gallery benches
+function createDecorations() {
   const benchMat = new THREE.MeshStandardMaterial({ color: 0x2c2420, roughness: 0.6, metalness: 0.1 });
+  const benchGeo = new THREE.BoxGeometry(2, 0.45, 0.6);
+
+  const benchCoords = [
+    { x: 0, z: 0, rotY: 0 },
+    { x: -12, z: -12, rotY: Math.PI / 4 },
+    { x: 12, z: 12, rotY: Math.PI / 4 },
+    { x: -12, z: 12, rotY: -Math.PI / 4 },
+    { x: 12, z: -12, rotY: -Math.PI / 4 }
+  ];
+
+  benchCoords.forEach((bc) => {
+    const bench = new THREE.Mesh(benchGeo, benchMat);
+    bench.position.set(bc.x, 0.225, bc.z);
+    bench.rotation.y = bc.rotY;
+    bench.castShadow = true;
+    bench.receiveShadow = true;
+    scene.add(bench);
+
+    // Legs
+    const legGeo = new THREE.BoxGeometry(0.06, 0.45, 0.06);
+    [[-0.9, -0.25], [-0.9, 0.25], [0.9, -0.25], [0.9, 0.25]].forEach(([lx, lz]) => {
+      const leg = new THREE.Mesh(legGeo, benchMat);
+      leg.position.set(lx, 0.225, lz);
+      bench.add(leg);
+    });
+  });
+}dMaterial({ color: 0x2c2420, roughness: 0.6, metalness: 0.1 });
   const benchGeo = new THREE.BoxGeometry(2, 0.45, 0.6);
 
   [-8, 0, 8].forEach((z) => {
@@ -1201,26 +1073,8 @@ function animate() {
     }
 
     // Clamp to room bounds
-    const margin = 1;
-    let minX, maxX;
-    let zVal = camera.position.z;
-    let xVal = camera.position.x;
-    
-    const inCorridorZ = zVal > -CORRIDOR_DEPTH/2 + margin && zVal < CORRIDOR_DEPTH/2 - margin;
-    
-    if (inCorridorZ) {
-       minX = -ROOM.width / 2 + margin;
-       maxX = ROOM_OFFSET_X + ROOM.width / 2 - margin;
-    } else {
-       if (xVal < ROOM_OFFSET_X / 2) {
-          minX = -ROOM.width / 2 + margin;
-          maxX = ROOM.width / 2 - margin;
-       } else {
-          minX = ROOM_OFFSET_X - ROOM.width / 2 + margin;
-          maxX = ROOM_OFFSET_X + ROOM.width / 2 - margin;
-       }
-    }
-    camera.position.x = Math.max(minX, Math.min(maxX, camera.position.x));
+    const margin = 1.2;
+    camera.position.x = Math.max(-ROOM.width / 2 + margin, Math.min(ROOM.width / 2 - margin, camera.position.x));
     camera.position.z = Math.max(-ROOM.depth / 2 + margin, Math.min(ROOM.depth / 2 - margin, camera.position.z));
     
     // Head Bobbing & Footsteps
@@ -1255,7 +1109,7 @@ function animate() {
       }
     }
     
-    // Update base distance text if carrying
+    // Update base distance text and directional arrow if carrying
     if (isCarrying && bases && myBaseIndex !== undefined) {
       const b = bases[myBaseIndex];
       const dx = camera.position.x - b.x;
@@ -1263,6 +1117,24 @@ function animate() {
       const dist = Math.sqrt(dx*dx + dz*dz).toFixed(1);
       const distEl = document.getElementById('base-distance-text');
       if (distEl) distEl.innerText = `Üsse Uzaklık: ${dist}m`;
+
+      // Update 3D Arrow helper
+      if (baseArrow) {
+        const camDir = new THREE.Vector3();
+        camera.getWorldDirection(camDir);
+        
+        // Float 1.2m in front of camera, slightly below crosshair (0.4m down)
+        const arrowPos = new THREE.Vector3()
+          .copy(camera.position)
+          .addScaledVector(camDir, 1.2);
+        arrowPos.y -= 0.4;
+        baseArrow.position.copy(arrowPos);
+        
+        // Point from arrow pos to base pos
+        const basePos = new THREE.Vector3(b.x, EYE_HEIGHT - 0.4, b.z);
+        const targetDir = new THREE.Vector3().subVectors(basePos, arrowPos).normalize();
+        baseArrow.setDirection(targetDir);
+      }
     }
   }
 
@@ -1294,6 +1166,56 @@ let bases = [];
 let lastSendTime = 0;
 const SEND_INTERVAL = 30; // ms between position broadcasts for smoother movement
 
+function createBaseVisuals() {
+  if (!bases) return;
+  baseVisualMeshes.forEach(mesh => scene.remove(mesh));
+  baseVisualMeshes.length = 0;
+  
+  bases.forEach((b, idx) => {
+    const isMyBase = (idx === myBaseIndex);
+    const color = isMyBase ? 0x4ade80 : 0xef4444; // Green for own base, Red for enemy bases
+    
+    const baseGroup = new THREE.Group();
+    baseGroup.position.set(b.x, 0, b.z);
+    
+    const padGeo = new THREE.CylinderGeometry(2, 2, 0.1, 32);
+    const padMat = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.4 });
+    const pad = new THREE.Mesh(padGeo, padMat);
+    pad.position.y = 0.05;
+    baseGroup.add(pad);
+    
+    const beamHeight = 15;
+    const beamGeo = new THREE.CylinderGeometry(1.8, 1.8, beamHeight, 16, 1, true);
+    const beamMat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: isMyBase ? 0.25 : 0.08,
+      side: THREE.DoubleSide
+    });
+    const beam = new THREE.Mesh(beamGeo, beamMat);
+    beam.position.y = beamHeight / 2;
+    baseGroup.add(beam);
+    
+    scene.add(baseGroup);
+    baseVisualMeshes.push(baseGroup);
+  });
+}
+
+function createBaseArrow() {
+  if (baseArrow) return;
+  const dir = new THREE.Vector3(0, 0, -1);
+  const origin = new THREE.Vector3(0, 0, 0);
+  baseArrow = new THREE.ArrowHelper(dir, origin, 1.5, 0x4ade80, 0.4, 0.2);
+  scene.add(baseArrow);
+}
+
+function removeBaseArrow() {
+  if (baseArrow) {
+    scene.remove(baseArrow);
+    baseArrow = null;
+  }
+}
+
 function initMultiplayer() {
   if (typeof io === 'undefined') return; // socket.io not loaded
 
@@ -1304,15 +1226,15 @@ function initMultiplayer() {
     myColor = data.color;
     myBaseIndex = data.myBaseIndex;
     bases = data.bases;
-    // Create base visual marker
+    
+    // Set camera position to our base position
     if (bases && myBaseIndex !== undefined) {
       const b = bases[myBaseIndex];
-      const baseGeo = new THREE.CylinderGeometry(2, 2, 0.1, 32);
-      const baseMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.5 });
-      const baseMesh = new THREE.Mesh(baseGeo, baseMat);
-      baseMesh.position.set(b.x, 0.05, b.z);
-      scene.add(baseMesh);
+      camera.position.set(b.x, EYE_HEIGHT, b.z);
     }
+    
+    // Create base visual markers
+    createBaseVisuals();
 
     // Add existing players
     data.players.forEach((p) => addPlayer(p));
@@ -1361,6 +1283,7 @@ function initMultiplayer() {
       if (isCarrying) {
         isCarrying = false;
         document.getElementById('carry-status').style.display = 'none';
+        removeBaseArrow();
       }
       document.getElementById('respawn-screen').style.display = 'flex';
       controls.unlock();
@@ -1401,6 +1324,7 @@ function initMultiplayer() {
     if (data.playerId === myId) {
       isCarrying = true;
       document.getElementById('carry-status').style.display = 'block';
+      createBaseArrow();
     }
     const painting = paintingMeshes.find(m => m.userData.artworkId === data.artworkId);
     if (painting && painting.parent) {
@@ -1413,14 +1337,12 @@ function initMultiplayer() {
       isCarrying = false;
       document.getElementById('carry-status').style.display = 'none';
       document.getElementById('score-val').textContent = data.newScore;
-      // Play a positive sound here if desired
+      removeBaseArrow();
     }
   });
 
   socket.on('artwork-returned', (artworkId) => {
     // A player dropped it or disconnected, we could respawn the mesh
-    // Simplified: Just leave it removed or respawn it.
-    // Full implementation would require re-adding the mesh to the parent.
   });
 
   socket.on('stolen-paintings', (ids) => {

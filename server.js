@@ -519,24 +519,42 @@ const AVATAR_COLORS = [
   '#6e8fc9', '#c9c16e', '#6ec9c9', '#c96eaa',
 ];
 
+const BASES = [
+  { x: 0, y: 1.65, z: 15 },
+  { x: 0, y: 1.65, z: -15 },
+  { x: 22, y: 1.65, z: 15 },
+  { x: 22, y: 1.65, z: -15 }
+];
+
 galleryNsp.on('connection', (socket) => {
   const color = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
   const joinedAt = new Date().toISOString();
+  const baseIndex = Math.floor(Math.random() * BASES.length);
   const playerData = {
     id: socket.id,
     name: 'Ziyaretçi',
     color,
-    position: { x: 0, y: 1.65, z: 15 },
+    baseIndex,
+    position: { ...BASES[baseIndex] },
     rotation: { x: 0, y: 0 },
     health: 100,
     score: 0,
-    isDead: false
+    kills: 0,
+    deaths: 0,
+    isDead: false,
+    invincibleUntil: Date.now() + 3000,
+    carryingArtworkId: null
   };
 
   // Send existing players to the new player
   const existingPlayers = [];
   players.forEach((p) => existingPlayers.push(p));
-  socket.emit('init', { id: socket.id, players: existingPlayers, color });
+  socket.emit('init', { 
+    id: socket.id, 
+    players: existingPlayers, 
+    color, 
+    stolenPaintings: Array.from(stolenPaintings) 
+  });
 
   // Set name
   socket.on('set-name', (name) => {
@@ -571,45 +589,87 @@ galleryNsp.on('connection', (socket) => {
 
   // Shoot event
   socket.on('shoot', (targetId) => {
+    const p = players.get(socket.id);
     const target = players.get(targetId);
-    if (target && !target.isDead) {
-      target.health -= 25;
-      if (target.health <= 0) {
-        target.health = 0;
-        target.isDead = true;
-        target.score = 0; // Drop artworks
-        galleryNsp.emit('player-died', { id: targetId });
-        
-        // Auto respawn after 5 seconds
-        setTimeout(() => {
-          if (players.has(targetId)) {
-            const p = players.get(targetId);
-            p.health = 100;
-            p.isDead = false;
-            p.position = { x: (Math.random() - 0.5) * 10, y: 1.65, z: 10 + (Math.random() - 0.5) * 5 };
-            galleryNsp.emit('player-respawned', p);
-          }
-        }, 5000);
+    if (!p || p.isDead || !target || target.isDead) return;
+    if (Date.now() < target.invincibleUntil) return; // Spawn protection
+
+    target.health -= 25;
+    if (target.health <= 0) {
+      target.health = 0;
+      target.isDead = true;
+      p.kills++;
+      target.deaths++;
+      
+      // Drop artwork if carrying
+      if (target.carryingArtworkId) {
+        stolenPaintings.delete(target.carryingArtworkId);
+        galleryNsp.emit('artwork-returned', target.carryingArtworkId);
+        target.carryingArtworkId = null;
       }
-      galleryNsp.emit('player-hit', { id: targetId, health: target.health });
+      
+      galleryNsp.emit('player-died', { 
+        id: targetId, 
+        killerId: socket.id, 
+        killerName: p.name, 
+        victimName: target.name,
+        killerKills: p.kills,
+        victimDeaths: target.deaths
+      });
+      
+      // Auto respawn after 5 seconds
+      setTimeout(() => {
+        if (players.has(targetId)) {
+          const tp = players.get(targetId);
+          tp.health = 100;
+          tp.isDead = false;
+          tp.invincibleUntil = Date.now() + 3000;
+          tp.position = { ...BASES[tp.baseIndex] };
+          galleryNsp.emit('player-respawned', tp);
+        }
+      }, 5000);
     }
+    galleryNsp.emit('player-hit', { id: targetId, health: target.health });
   });
 
   // Steal painting event
   socket.on('steal-painting', (artworkId) => {
     const p = players.get(socket.id);
-    if (p && !p.isDead && !stolenPaintings.has(artworkId)) {
-      stolenPaintings.add(artworkId);
-      p.score += 1;
-      galleryNsp.emit('painting-stolen', { artworkId, playerId: socket.id, newScore: p.score });
+    if (!p || p.isDead || p.carryingArtworkId) return;
+    if (stolenPaintings.has(artworkId)) return;
+    
+    stolenPaintings.add(artworkId);
+    p.carryingArtworkId = artworkId;
+    galleryNsp.emit('painting-stolen', { playerId: socket.id, artworkId });
+  });
+
+  // Deposit painting event
+  socket.on('deposit-painting', () => {
+    const p = players.get(socket.id);
+    if (!p || p.isDead || !p.carryingArtworkId) return;
+    
+    // Dist to base check (approximate distance)
+    const base = BASES[p.baseIndex];
+    const dx = p.position.x - base.x;
+    const dz = p.position.z - base.z;
+    if (dx*dx + dz*dz < 30) {
+      p.score++;
+      galleryNsp.emit('painting-deposited', { 
+        playerId: socket.id, 
+        newScore: p.score, 
+        artworkId: p.carryingArtworkId 
+      });
+      p.carryingArtworkId = null;
     }
   });
 
-  // Send current stolen paintings to new player
-  socket.emit('stolen-paintings', Array.from(stolenPaintings));
-
   // Disconnect
   socket.on('disconnect', () => {
+    const p = players.get(socket.id);
+    if (p && p.carryingArtworkId) {
+      stolenPaintings.delete(p.carryingArtworkId);
+      galleryNsp.emit('artwork-returned', p.carryingArtworkId);
+    }
     players.delete(socket.id);
     galleryNsp.emit('player-left', socket.id);
     // Update visitor leftAt
@@ -623,6 +683,7 @@ galleryNsp.on('connection', (socket) => {
     writeVisitors(visitors);
   });
 });
+
 
 // ─── Telegram Analytics & Tracking ─────────────────
 const activeSessions = new Map();

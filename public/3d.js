@@ -795,8 +795,10 @@ function setupDesktopEvents() {
     crosshair.style.display = '';
     const hc = document.getElementById('health-bar-container');
     const sb = document.getElementById('scoreboard');
+    const am = document.getElementById('ammo-container');
     if (hc) hc.style.display = 'block';
     if (sb) sb.style.display = 'block';
+    if (am) am.style.display = 'block';
   });
 
   controls.addEventListener('unlock', () => {
@@ -807,8 +809,10 @@ function setupDesktopEvents() {
     crosshair.style.display = 'none';
     const hc = document.getElementById('health-bar-container');
     const sb = document.getElementById('scoreboard');
+    const am = document.getElementById('ammo-container');
     if (hc) hc.style.display = 'none';
     if (sb) sb.style.display = 'none';
+    if (am) am.style.display = 'none';
   });
 
   document.addEventListener('keydown', (e) => {
@@ -1186,9 +1190,11 @@ function animate() {
       direction.z = Number(moveForward) - Number(moveBackward);
       direction.x = Number(moveRight) - Number(moveLeft);
       direction.normalize();
+      
+      const currentSpeed = (typeof isSprinting !== 'undefined' && isSprinting && moveForward) ? WALK_SPEED * 1.6 : WALK_SPEED;
 
-      if (moveForward || moveBackward) velocity.z -= direction.z * WALK_SPEED * delta * 10;
-      if (moveLeft || moveRight) velocity.x -= direction.x * WALK_SPEED * delta * 10;
+      if (moveForward || moveBackward) velocity.z -= direction.z * currentSpeed * delta * 10;
+      if (moveLeft || moveRight) velocity.x -= direction.x * currentSpeed * delta * 10;
 
       controls.moveRight(-velocity.x * delta);
       controls.moveForward(-velocity.z * delta);
@@ -1317,20 +1323,43 @@ function initMultiplayer() {
   });
 
   socket.on('player-died', (data) => {
+    // Kill feed
+    if (data.killerName && data.victimName) {
+      const kf = document.getElementById('kill-feed');
+      const item = document.createElement('div');
+      item.innerHTML = `<span style="color:#ef4444">${data.killerName}</span> 🔫 <span>${data.victimName}</span>`;
+      kf.appendChild(item);
+      setTimeout(() => item.remove(), 4000);
+    }
+    
     if (data.id === myId) {
       isDead = true;
+      if (isCarrying) {
+        isCarrying = false;
+        document.getElementById('carry-status').style.display = 'none';
+      }
       document.getElementById('respawn-screen').style.display = 'flex';
       controls.unlock();
-      document.getElementById('score-val').textContent = '0';
     } else {
       const p = otherPlayers.get(data.id);
       if (p) p.mesh.rotation.x = Math.PI / 2; // Fall over
+    }
+    
+    // Update Scoreboard if killer is me
+    if (data.killerId === myId) {
+      document.getElementById('kill-val').textContent = data.killerKills;
+    }
+    // Update Scoreboard if victim is me
+    if (data.id === myId) {
+      document.getElementById('death-val').textContent = data.victimDeaths;
     }
   });
 
   socket.on('player-respawned', (data) => {
     if (data.id === myId) {
       isDead = false;
+      ammo = 15; // Refill ammo on spawn
+      document.getElementById('ammo-current').textContent = ammo;
       document.getElementById('respawn-screen').style.display = 'none';
       document.getElementById('health-bar-fill').style.width = '100%';
       camera.position.set(data.position.x, data.position.y, data.position.z);
@@ -1346,12 +1375,28 @@ function initMultiplayer() {
 
   socket.on('painting-stolen', (data) => {
     if (data.playerId === myId) {
-      document.getElementById('score-val').textContent = data.newScore;
+      isCarrying = true;
+      document.getElementById('carry-status').style.display = 'block';
     }
     const painting = paintingMeshes.find(m => m.userData.artworkId === data.artworkId);
     if (painting && painting.parent) {
       painting.parent.remove(painting);
     }
+  });
+
+  socket.on('painting-deposited', (data) => {
+    if (data.playerId === myId) {
+      isCarrying = false;
+      document.getElementById('carry-status').style.display = 'none';
+      document.getElementById('score-val').textContent = data.newScore;
+      // Play a positive sound here if desired
+    }
+  });
+
+  socket.on('artwork-returned', (artworkId) => {
+    // A player dropped it or disconnected, we could respawn the mesh
+    // Simplified: Just leave it removed or respawn it.
+    // Full implementation would require re-adding the mesh to the parent.
   });
 
   socket.on('stolen-paintings', (ids) => {
@@ -1365,25 +1410,50 @@ function initMultiplayer() {
 }
 
 let isDead = false;
+let ammo = 15;
+let isReloading = false;
+let isCarrying = false;
+let isSprinting = false;
 
 window.addEventListener('mousedown', (e) => {
   if (!controls || !controls.isLocked || isDead) return;
+  if (isCarrying) return; // Cannot shoot while carrying
+
   if (e.button === 0) {
+    if (isReloading) return;
+    if (ammo <= 0) {
+      playFootstep(); // Empty click sound
+      return;
+    }
+    
+    ammo--;
+    document.getElementById('ammo-current').textContent = ammo;
+
     raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
     const playerMeshes = Array.from(otherPlayers.values()).map(p => p.mesh);
     const hits = raycaster.intersectObjects(playerMeshes, true);
+    
+    let hitSuccess = false;
     if (hits.length > 0) {
       for (const [id, player] of otherPlayers.entries()) {
         let hitObj = hits[0].object;
         while(hitObj) {
           if (hitObj === player.mesh) {
             socket.emit('shoot', id);
+            hitSuccess = true;
             break;
           }
           hitObj = hitObj.parent;
         }
       }
     }
+    
+    if (hitSuccess) {
+      const hm = document.getElementById('hit-marker');
+      hm.style.display = 'block';
+      setTimeout(() => hm.style.display = 'none', 100);
+    }
+
     // Recoil
     const recoil = 0.05;
     camera.rotation.x += recoil;
@@ -1403,21 +1473,44 @@ window.addEventListener('mousedown', (e) => {
       tracerMat.dispose();
     }, 80); // Quick flash
     
-    // Play gun sound (synthesized thud)
+    // Play gun sound
     playFootstep();
   }
 });
 
 window.addEventListener('keydown', (e) => {
   if (!controls || !controls.isLocked || isDead) return;
-  if (e.key.toLowerCase() === 'e') {
-    raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
-    const hits = raycaster.intersectObjects(paintingMeshes);
-    if (hits.length > 0 && hits[0].distance < 4) {
-      const artId = hits[0].object.userData.artworkId;
-      socket.emit('steal-painting', artId);
+  const key = e.key.toLowerCase();
+  
+  if (key === 'shift') isSprinting = true;
+  
+  if (key === 'r' && ammo < 15 && !isReloading && !isCarrying) {
+    isReloading = true;
+    document.getElementById('ammo-current').textContent = '...';
+    // Fake reload delay
+    setTimeout(() => {
+      ammo = 15;
+      document.getElementById('ammo-current').textContent = ammo;
+      isReloading = false;
+    }, 1500);
+  }
+  
+  if (key === 'e') {
+    if (isCarrying) {
+      socket.emit('deposit-painting');
+    } else {
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const hits = raycaster.intersectObjects(paintingMeshes);
+      if (hits.length > 0 && hits[0].distance < 4) {
+        const artId = hits[0].object.userData.artworkId;
+        socket.emit('steal-painting', artId);
+      }
     }
   }
+});
+
+window.addEventListener('keyup', (e) => {
+  if (e.key.toLowerCase() === 'shift') isSprinting = false;
 });
 
 function getPlayerName() {

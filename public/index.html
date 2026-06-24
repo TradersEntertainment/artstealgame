@@ -3,579 +3,197 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Fuat Sezgin Fen Lisesi 2025-2026 Öğrenci Resim Sergisi — Fırça İzleri. Genç sanatçılarımızın özgün eserlerini keşfedin.">
-  <meta name="keywords" content="resim sergisi, sanat, okul sergisi, öğrenci eserleri, Fuat Sezgin Fen Lisesi, görsel sanatlar">
-  <meta name="author" content="Fuat Sezgin Fen Lisesi Görsel Sanatlar Bölümü">
-
-  <title>Fırça İzleri — Öğrenci Resim Sergisi 2026</title>
-
-  <link rel="stylesheet" href="style.css">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+  <meta name="description" content="Museum Heist - Çok Oyunculu FPS Sanat Soygunu Oyunu">
+  <title>MUSEUM HEIST</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #050505;
+      --primary: #ef4444;
+      --primary-hover: #dc2626;
+      --text: #ffffff;
+      --accent: #c9a96e;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .hero {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      padding: 2rem;
+    }
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(200, 0, 0, 0.1) 0%, transparent 70%),
+                  url('https://www.transparenttextures.com/patterns/stardust.png');
+      z-index: -1;
+    }
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3rem, 10vw, 7rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+      background: linear-gradient(to right, var(--text), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: titleGlow 3s ease-in-out infinite alternate;
+    }
+    @keyframes titleGlow {
+      0% { text-shadow: 0 0 20px rgba(201, 169, 110, 0.2); }
+      100% { text-shadow: 0 0 40px rgba(201, 169, 110, 0.6); }
+    }
+    .subtitle {
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      color: #999;
+      max-width: 600px;
+      margin-bottom: 3rem;
+      line-height: 1.6;
+    }
+    .action-panel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 2.5rem;
+      border-radius: 1rem;
+      backdrop-filter: blur(10px);
+      width: 100%;
+      max-width: 400px;
+    }
+    .input-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #ccc;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .name-input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-size: 1.1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .name-input:focus {
+      border-color: var(--primary);
+    }
+    .play-btn {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 1rem;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    }
+    .play-btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3);
+    }
+    .play-btn:active {
+      transform: translateY(0);
+    }
+    .features {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      margin-top: 4rem;
+      flex-wrap: wrap;
+    }
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #888;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .feature svg {
+      width: 20px;
+      height: 20px;
+      color: var(--accent);
+    }
+  </style>
 </head>
 <body>
-
-  <!-- ═══════════════════════════════════════════
-       HEADER / NAVIGATION
-       ═══════════════════════════════════════════ -->
-  <header class="site-header" id="site-header">
-    <div class="container header-inner">
-      <a href="#" class="header-logo">
-        <div class="header-logo-icon">Fİ</div>
-        <span class="header-logo-text">Fırça İzleri</span>
-      </a>
-      <nav class="header-nav" id="header-nav">
-        <a href="#hakkinda">Hakkında</a>
-        <a href="#galeri">Galeri</a>
-        <a href="/3d.html" class="nav-3d">
-          <svg class="nav-3d-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-          </svg>
-          3D Tur
-          <span class="nav-3d-badge">YENİ</span>
-        </a>
-        <a href="#basvuru">Başvur</a>
-        <a href="#sergi-bilgileri">Sergi Bilgileri</a>
-        <a href="#iletisim">İletişim</a>
-      </nav>
-      <button class="menu-toggle" id="menu-toggle" aria-label="Menüyü aç/kapat">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
-    </div>
-  </header>
-
-  <!-- ═══════════════════════════════════════════
-       HERO SECTION
-       ═══════════════════════════════════════════ -->
-  <section class="hero" id="hero">
-    <div class="hero-bg">
-      <div class="hero-bg-line"></div>
-      <div class="hero-bg-line"></div>
-      <div class="hero-bg-line"></div>
-      <div class="hero-bg-line"></div>
+  <div class="hero">
+    <div class="hero-bg"></div>
+    <h1 class="title">MUSEUM HEIST</h1>
+    <p class="subtitle">Çok Oyunculu Bayrak Kapmaca FPS. Diğer hırsızlarla savaş, tabloları çal ve kendi üssüne getirerek skor kazan.</p>
+    
+    <div class="action-panel">
+      <div class="input-group">
+        <label for="player-name">Kod Adı</label>
+        <input type="text" id="player-name" class="name-input" placeholder="Hırsız_01" maxlength="16" autocomplete="off">
+      </div>
+      <button class="play-btn" onclick="startGame()">OYUNA GİR</button>
     </div>
 
-    <!-- Scattered Paintings Background — 3 Rows, Different Directions -->
-    <div class="hero-paintings-layer" aria-hidden="true">
-      <!-- Row 1: Top — scrolls LEFT, slower, larger -->
-      <div class="paintings-row paintings-row--1">
-        <div class="paintings-track track--left track--slow">
-          <div class="painting-card rot-1"><img src="images/famous_starrynight.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_istanbul.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/artwork_abstract.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_cappadocia.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/famous_monalisa.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_scream.png" alt=""></div>
-          <!-- duplicate for seamless loop -->
-          <div class="painting-card rot-1"><img src="images/famous_starrynight.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_istanbul.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/artwork_abstract.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_cappadocia.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/famous_monalisa.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_scream.png" alt=""></div>
-        </div>
+    <div class="features">
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Eser Taşıma Sistemi
       </div>
-
-      <!-- Row 2: Middle — scrolls RIGHT, medium speed -->
-      <div class="paintings-row paintings-row--2">
-        <div class="paintings-track track--right track--medium">
-          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/artwork_charcoal.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_impressionsunrise.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/artwork_stillife.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_starrynight.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_nature.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/famous_persistence.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_monalisa.png" alt=""></div>
-          <!-- duplicate -->
-          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/artwork_charcoal.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_impressionsunrise.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/artwork_stillife.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_starrynight.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_nature.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_waterlilies.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/famous_persistence.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_monalisa.png" alt=""></div>
-        </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        Gerçek Zamanlı FPS
       </div>
-
-      <!-- Row 3: Bottom — scrolls LEFT, fast, smaller -->
-      <div class="paintings-row paintings-row--3">
-        <div class="paintings-track track--left track--fast">
-          <div class="painting-card rot-2"><img src="images/artwork_architecture.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_portrait.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/artwork_istanbul.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/artwork_cappadocia.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_impressionsunrise.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/famous_scream.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_persistence.png" alt=""></div>
-          <!-- duplicate -->
-          <div class="painting-card rot-2"><img src="images/artwork_architecture.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_sunflowers.png" alt=""></div>
-          <div class="painting-card rot-3"><img src="images/artwork_portrait.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_greatwave.png" alt=""></div>
-          <div class="painting-card rot-1"><img src="images/artwork_istanbul.png" alt=""></div>
-          <div class="painting-card rot-neg2"><img src="images/famous_girlpearl.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/artwork_cappadocia.png" alt=""></div>
-          <div class="painting-card rot-neg1"><img src="images/famous_impressionsunrise.png" alt=""></div>
-          <div class="painting-card rot-2"><img src="images/famous_scream.png" alt=""></div>
-          <div class="painting-card rot-neg3"><img src="images/famous_persistence.png" alt=""></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Hero Content -->
-    <div class="hero-content">
-      <div class="hero-overline">Fuat Sezgin Fen Lisesi Sunar</div>
-      <h1 class="hero-title">Fırça <em>İzleri</em></h1>
-
-      <!-- Rotating Inspirational Quotes -->
-      <div class="hero-quote-rotator" id="hero-quote-rotator">
-        <blockquote class="hero-quote active">
-          <p>«Her çocuk bir sanatçıdır. Mesele, büyüdüğünüzde de sanatçı kalabilmektir.»</p>
-          <cite>— Pablo Picasso</cite>
-        </blockquote>
-        <blockquote class="hero-quote">
-          <p>«Sanat, görünmeyeni görünür kılmaktır.»</p>
-          <cite>— Paul Klee</cite>
-        </blockquote>
-        <blockquote class="hero-quote">
-          <p>«Renk, ruhun üzerindeki doğrudan etkisiyle tuşlara dokunan el, göz ise çekici, ruh ise bin telli piyanodur.»</p>
-          <cite>— Wassily Kandinsky</cite>
-        </blockquote>
-        <blockquote class="hero-quote">
-          <p>«Hayal gücü bilgiden daha önemlidir. Bilgi sınırlıdır, hayal gücü ise dünyayı sarar.»</p>
-          <cite>— Albert Einstein</cite>
-        </blockquote>
-        <blockquote class="hero-quote">
-          <p>«Doğada düz çizgi yoktur.»</p>
-          <cite>— Antoni Gaudí</cite>
-        </blockquote>
-      </div>
-
-      <!-- CTA Buttons -->
-      <div class="hero-cta-group">
-        <a href="#galeri" class="hero-cta">
-          <span>Eserleri Keşfet</span>
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-          </svg>
-        </a>
-        <button class="hero-cta hero-cta--secondary" onclick="openTourModal()">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-          </svg>
-          <span>3D Sanal Tur</span>
-        </button>
-      </div>
-
-      <div class="hero-meta">
-        <div class="hero-meta-item">
-          <span class="hero-meta-label">Tarih</span>
-          <span class="hero-meta-value" id="hero-date">Yükleniyor...</span>
-        </div>
-        <div class="hero-meta-divider"></div>
-        <div class="hero-meta-item">
-          <span class="hero-meta-label">Konum</span>
-          <span class="hero-meta-value" id="hero-location">Yükleniyor...</span>
-        </div>
-        <div class="hero-meta-divider"></div>
-        <div class="hero-meta-item">
-          <span class="hero-meta-label">Eser Sayısı</span>
-          <span class="hero-meta-value" id="hero-artwork-count">...</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="hero-scroll-indicator">
-      <span>Keşfet</span>
-      <div class="hero-scroll-line"></div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       ABOUT SECTION
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="hakkinda">
-    <div class="container">
-      <div class="about-grid">
-        <div class="about-image-wrapper reveal">
-          <img src="images/artwork_istanbul.png" alt="Sergi atmosferi — Gün Batımında İstanbul" loading="lazy">
-        </div>
-        <div class="about-text">
-          <div class="section-overline reveal">Sergi Hakkında</div>
-          <h3 class="reveal reveal-delay-1">
-            Her fırça darbesi bir <em>hikâye</em>,<br>
-            her eser bir <em>dünya</em> barındırır.
-          </h3>
-          <p class="reveal reveal-delay-2">
-            «Fırça İzleri» sergisi, Fuat Sezgin Fen Lisesi Görsel Sanatlar dersi öğrencilerinin
-            2025–2026 eğitim-öğretim yılı boyunca ürettikleri eserlerin bir seçkisini sunmaktadır.
-            Yağlı boya, suluboya, karakalem, akrilik ve mürekkep gibi farklı tekniklerle
-            hayat bulan bu eserler, öğrencilerimizin sanatsal gelişimini ve özgün bakış
-            açılarını yansıtmaktadır.
-          </p>
-          <p class="reveal reveal-delay-3">
-            Sergimiz, genç yeteneklerin sanat yolculuğundaki en güzel durakları
-            bir araya getirerek sanatseverlerle buluşturmayı amaçlamaktadır.
-          </p>
-          <div class="about-stats reveal reveal-delay-4">
-            <div class="about-stat">
-              <div class="about-stat-number">8</div>
-              <div class="about-stat-label">Eser</div>
-            </div>
-            <div class="about-stat">
-              <div class="about-stat-number">8</div>
-              <div class="about-stat-label">Sanatçı</div>
-            </div>
-            <div class="about-stat">
-              <div class="about-stat-number">5</div>
-              <div class="about-stat-label">Teknik</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       GALLERY SECTION
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="galeri">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-overline reveal">Koleksiyon</div>
-        <h2 class="section-title reveal reveal-delay-1">Sergi Eserleri</h2>
-        <p class="section-description reveal reveal-delay-2">
-          Her biri farklı bir hikâye anlatan eserlerimizi keşfedin.
-          Detaylı inceleme için eserlere tıklayın.
-        </p>
-      </div>
-
-      <!-- Filter Buttons -->
-      <div class="gallery-filters reveal">
-        <button class="filter-btn active" data-filter="all">Tümü</button>
-        <button class="filter-btn" data-filter="2025-2026">2025-2026</button>
-        <button class="filter-btn" data-filter="ozel-koleksiyon">FSFL Özel Koleksiyon</button>
-      </div>
-
-      <!-- Gallery Grid -->
-      <div class="gallery-grid" id="gallery-grid">
-        <!-- Cards are injected by JS -->
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       SUBMISSION FORM SECTION
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="basvuru">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-overline reveal">Katılım</div>
-        <h2 class="section-title reveal reveal-delay-1">Sergiye Başvur</h2>
-        <p class="section-description reveal reveal-delay-2">
-          Eserini sergimizde görmek ister misin? Aşağıdaki formu doldurarak başvurunu ilet.
-          Başvurun onaylandığında eserin galerimize eklenecektir.
-        </p>
-      </div>
-
-      <div class="submission-form-wrapper reveal">
-        <form id="submission-form" class="submission-form" enctype="multipart/form-data">
-          <div class="form-row">
-            <div class="form-group">
-              <label for="sub-artist">Ad Soyad</label>
-              <input type="text" id="sub-artist" name="artist" placeholder="Adınızı ve soyadınızı girin" required />
-            </div>
-            <div class="form-group">
-              <label for="sub-grade">Sınıf</label>
-              <input type="text" id="sub-grade" name="grade" placeholder="Ör: 11-A" required />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="sub-title">Eser Adı</label>
-              <input type="text" id="sub-title" name="title" placeholder="Eserinizin başlığı" required />
-            </div>
-            <div class="form-group">
-              <label for="sub-technique">Teknik</label>
-              <select id="sub-technique" name="technique" required>
-                <option value="yagliboya">Yağlı Boya</option>
-                <option value="suluboya">Suluboya</option>
-                <option value="akrilik">Akrilik</option>
-                <option value="karakalem">Karakalem</option>
-                <option value="murekkep">Mürekkep</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="sub-dimensions">Boyutlar</label>
-              <input type="text" id="sub-dimensions" name="dimensions" placeholder="Ör: 60 × 80 cm" />
-            </div>
-            <div class="form-group">
-              <label for="sub-exhibition">Sergi Dönemi</label>
-              <select id="sub-exhibition" name="exhibition" required>
-                <option value="2025-2026">2025-2026</option>
-                <option value="ozel-koleksiyon">FSFL Özel Koleksiyon</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="sub-description">Eser Hakkında</label>
-            <textarea id="sub-description" name="description" rows="4" placeholder="Eserinizi kısaca anlatın…"></textarea>
-          </div>
-
-          <div class="form-group form-group--full">
-            <label>Eser Görselleri</label>
-            <div class="upload-grid">
-
-              <!-- Slot 1: Ana Görsel (zorunlu) -->
-              <div class="upload-slot" data-slot="1">
-                <div class="upload-slot-label">
-                  <span class="upload-slot-number">1</span>
-                  <strong>Eser Görseli</strong> <span class="upload-required">*zorunlu</span>
-                </div>
-                <p class="upload-slot-hint">Eserin tam ve net bir fotoğrafını yükleyin.</p>
-                <div class="submission-upload-zone" id="sub-upload-zone-1">
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
-                  </svg>
-                  <p>Sürükle veya <span class="upload-browse">seç</span></p>
-                  <input type="file" id="sub-image-1" name="image" accept="image/*" required hidden />
-                </div>
-                <div class="submission-preview hidden" id="sub-preview-1">
-                  <img id="sub-preview-img-1" alt="Ana görsel" />
-                  <button type="button" class="preview-remove" data-clear="1">✕</button>
-                </div>
-              </div>
-
-              <!-- Slot 2: Detay Çekim (opsiyonel) -->
-              <div class="upload-slot" data-slot="2">
-                <div class="upload-slot-label">
-                  <span class="upload-slot-number">2</span>
-                  <strong>Ek Görsel 1</strong>
-                </div>
-                <p class="upload-slot-hint">Detay çekimi, farklı bir açı veya eserle birlikte kendi fotoğrafınız olabilir.</p>
-                <div class="submission-upload-zone" id="sub-upload-zone-2">
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
-                  </svg>
-                  <p>Sürükle veya <span class="upload-browse">seç</span></p>
-                  <input type="file" id="sub-image-2" name="image2" accept="image/*" hidden />
-                </div>
-                <div class="submission-preview hidden" id="sub-preview-2">
-                  <img id="sub-preview-img-2" alt="Detay çekim" />
-                  <button type="button" class="preview-remove" data-clear="2">✕</button>
-                </div>
-              </div>
-
-              <!-- Slot 3: Farklı Açı (opsiyonel) -->
-              <div class="upload-slot" data-slot="3">
-                <div class="upload-slot-label">
-                  <span class="upload-slot-number">3</span>
-                  <strong>Ek Görsel 2</strong>
-                </div>
-                <p class="upload-slot-hint">Hazırlık aşaması, eskizler veya eklemek istediğiniz dilediğiniz başka bir görsel.</p>
-                <div class="submission-upload-zone" id="sub-upload-zone-3">
-                  <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-                  </svg>
-                  <p>Sürükle veya <span class="upload-browse">seç</span></p>
-                  <input type="file" id="sub-image-3" name="image3" accept="image/*" hidden />
-                </div>
-                <div class="submission-preview hidden" id="sub-preview-3">
-                  <img id="sub-preview-img-3" alt="Farklı açı" />
-                  <button type="button" class="preview-remove" data-clear="3">✕</button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <button type="submit" class="btn-submit" id="sub-submit-btn">
-            <span>Başvuruyu Gönder</span>
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-          </button>
-
-          <div class="submission-success hidden" id="sub-success">
-            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            <h3>Başvurunuz Alındı!</h3>
-            <p>Eseriniz incelenmek üzere gönderildi. Onaylandığında galerimize eklenecektir.</p>
-          </div>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       EXHIBITION INFO SECTION
-       ═══════════════════════════════════════════ -->
-  <section class="section" id="sergi-bilgileri">
-    <div class="container">
-      <div class="section-header">
-        <div class="section-overline reveal">Detaylar</div>
-        <h2 class="section-title reveal reveal-delay-1">Sergi Bilgileri</h2>
-        <p class="section-description reveal reveal-delay-2">
-          Sergimizi ziyaret etmek için aşağıdaki bilgileri inceleyebilirsiniz.
-        </p>
-      </div>
-      <div class="info-cards">
-        <div class="info-card reveal">
-          <div class="info-card-icon">
-            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-          <h3>Tarih & Saat</h3>
-          <p id="info-datetime">Yükleniyor...</p>
-        </div>
-        <div class="info-card reveal reveal-delay-1">
-          <div class="info-card-icon">
-            <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          </div>
-          <h3>Konum</h3>
-          <p id="info-location">Yükleniyor...</p>
-        </div>
-        <div class="info-card reveal reveal-delay-2">
-          <div class="info-card-icon">
-            <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-          </div>
-          <h3>İletişim</h3>
-          <p id="info-contact">Yükleniyor...</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════
-       FOOTER
-       ═══════════════════════════════════════════ -->
-  <footer class="site-footer" id="iletisim">
-    <div class="container">
-      <div class="footer-inner">
-        <div class="footer-brand">
-          <div class="footer-brand-icon">Fİ</div>
-          <span class="footer-brand-text">Fırça İzleri — 2026</span>
-        </div>
-        <div class="footer-links">
-          <a href="#hero">Ana Sayfa</a>
-          <a href="#hakkinda">Hakkında</a>
-          <a href="#galeri">Galeri</a>
-          <a href="#sergi-bilgileri">Bilgiler</a>
-        </div>
-      </div>
-      <div class="footer-copyright">
-        © 2026 Fuat Sezgin Fen Lisesi Görsel Sanatlar Bölümü. Tüm hakları saklıdır.
-        <br>T.C. Millî Eğitim Bakanlığı bünyesinde faaliyet göstermektedir.
-      </div>
-    </div>
-  </footer>
-
-  <!-- ═══════════════════════════════════════════
-       LIGHTBOX
-       ═══════════════════════════════════════════ -->
-  <div class="lightbox" id="lightbox">
-    <div class="lightbox-backdrop" id="lightbox-backdrop"></div>
-    <div class="lightbox-content">
-      <div class="lightbox-image-area">
-        <button class="lightbox-nav-btn lightbox-prev" id="lightbox-prev" aria-label="Önceki eser">
-          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <div class="lightbox-image-wrapper">
-          <img src="" alt="" id="lightbox-image">
-        </div>
-        <button class="lightbox-nav-btn lightbox-next" id="lightbox-next" aria-label="Sonraki eser">
-          <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
-        </button>
-      </div>
-      <div class="lightbox-detail">
-        <button class="lightbox-close" id="lightbox-close" aria-label="Kapat">
-          <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-        <div class="lightbox-detail-overline" id="lightbox-overline"></div>
-        <h2 class="lightbox-detail-title" id="lightbox-title"></h2>
-        <p class="lightbox-detail-artist" id="lightbox-artist"></p>
-        <div class="lightbox-detail-divider"></div>
-        <div class="lightbox-detail-specs" id="lightbox-specs"></div>
-        <div class="lightbox-detail-description">
-          <h4>Sanatçı Notu</h4>
-          <p id="lightbox-description"></p>
-        </div>
+      <div class="feature">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Üs (Base) Savunması
       </div>
     </div>
   </div>
 
-  <!-- Tour Selection Modal -->
-  <div class="modal-overlay hidden" id="tour-modal-overlay">
-    <div class="modal" id="tour-modal">
-      <div class="modal-header">
-        <h2 class="modal-title">Hangi Sergiyi Gezmek İstersiniz?</h2>
-        <button class="modal-close" onclick="closeTourModal()" aria-label="Kapat">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-          </svg>
-        </button>
-      </div>
-      <div class="modal-body" id="tour-modal-body">
-        <a href="3d.html?exhibition=2025-2026" class="tour-option">
-          <div class="tour-option-icon">🎨</div>
-          <div class="tour-option-info">
-            <h3>2025-2026 Sergisi</h3>
-            <p>Öğrencilerimizin bu yılki eserlerini keşfedin</p>
-          </div>
-          <div class="tour-option-arrow">→</div>
-        </a>
-        <a href="3d.html?exhibition=ozel-koleksiyon" class="tour-option tour-option-special">
-          <div class="tour-option-icon">🏆</div>
-          <div class="tour-option-info">
-            <h3>FSFL Özel Koleksiyon</h3>
-            <p>Okulumuzun kalıcı sanat koleksiyonunu gezin</p>
-          </div>
-          <div class="tour-option-arrow">→</div>
-        </a>
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
   <script>
-    // Tour Modal Open/Close
-    function openTourModal() {
-      document.getElementById('tour-modal-overlay').classList.remove('hidden');
+    function startGame() {
+      const nameInput = document.getElementById('player-name').value.trim();
+      let url = '3d.html';
+      if (nameInput) {
+        url += '?name=' + encodeURIComponent(nameInput);
+      }
+      window.location.href = url;
     }
-    function closeTourModal() {
-      document.getElementById('tour-modal-overlay').classList.add('hidden');
-    }
-    document.getElementById('tour-modal-overlay').addEventListener('click', (e) => {
-      if (e.target.id === 'tour-modal-overlay') closeTourModal();
-    });
 
-    // Hook ALL 3D tour links to open the modal instead of navigating
-    document.querySelectorAll('a[href="3d.html"], a[href="/3d.html"]').forEach(link => {
-      link.addEventListener('click', (e) => {
-        e.preventDefault();
-        openTourModal();
-      });
+    // Enter key support
+    document.getElementById('player-name').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        startGame();
+      }
     });
   </script>
-  <script src="tracker.js"></script>
 </body>
 </html>

@@ -193,6 +193,14 @@ async function init() {
   flashlight.target.position.set(0, 0, -1);
   camera.add(flashlight);
   camera.add(flashlight.target);
+  
+  // Gun Model
+  const gunGeo = new THREE.BoxGeometry(0.08, 0.12, 0.35);
+  const gunMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.8, roughness: 0.2 });
+  const gunMesh = new THREE.Mesh(gunGeo, gunMat);
+  gunMesh.position.set(0.25, -0.2, -0.5);
+  camera.add(gunMesh);
+  
   scene.add(camera);
   
   const urlParams = new URLSearchParams(window.location.search);
@@ -1266,7 +1274,7 @@ let socket = null;
 let myId = null;
 let myColor = '#c9a96e';
 let lastSendTime = 0;
-const SEND_INTERVAL = 100; // ms between position broadcasts
+const SEND_INTERVAL = 30; // ms between position broadcasts for smoother movement
 
 function initMultiplayer() {
   if (typeof io === 'undefined') return; // socket.io not loaded
@@ -1380,6 +1388,20 @@ window.addEventListener('mousedown', (e) => {
     const recoil = 0.05;
     camera.rotation.x += recoil;
     setTimeout(() => camera.rotation.x -= recoil, 50);
+    
+    // Laser Tracer
+    const tracerMat = new THREE.LineBasicMaterial({ color: 0xffaa00, transparent: true, opacity: 0.8 });
+    const points = [];
+    points.push(new THREE.Vector3(0.25, -0.2, -0.5)); // From gun tip
+    points.push(new THREE.Vector3(0, 0, -50)); // Far forward
+    const tracerGeo = new THREE.BufferGeometry().setFromPoints(points);
+    const laser = new THREE.Line(tracerGeo, tracerMat);
+    camera.add(laser);
+    setTimeout(() => {
+      camera.remove(laser);
+      tracerGeo.dispose();
+      tracerMat.dispose();
+    }, 80); // Quick flash
     
     // Play gun sound (synthesized thud)
     playFootstep();

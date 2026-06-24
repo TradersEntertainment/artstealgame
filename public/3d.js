@@ -344,6 +344,186 @@ let gunGroup = null;
 let speedBoostTime = 0;
 let WALK_SPEED_MULTIPLIER = 1.0;
 
+// State variables moved to top to prevent Temporal Dead Zone (TDZ) ReferenceErrors in init()
+const otherPlayers = new Map(); // id → { mesh, nameSprite, targetPos, targetRot }
+let socket = null;
+let myId = null;
+let myColor = '#c9a96e';
+let myBaseIndex;
+let bases = [];
+let lastSendTime = 0;
+const SEND_INTERVAL = 30; // ms between position broadcasts
+let isDead = false;
+let ammo = 15;
+let isReloading = false;
+let isCarrying = false;
+let isSprinting = false;
+
+// Procedural 3D Gun Model Generator
+function createGunModel(weaponType) {
+  if (gunGroup) {
+    camera.remove(gunGroup);
+    gunGroup.traverse((child) => {
+      if (child.geometry) child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach(m => m.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+    });
+  }
+
+  gunGroup = new THREE.Group();
+  gunGroup.position.set(0.25, -0.22, -0.45); // Align with weapon recoil/tracer tip
+
+  const metalMat = new THREE.MeshStandardMaterial({
+    color: 0x1f2022,
+    metalness: 0.8,
+    roughness: 0.2
+  });
+  const gripMat = new THREE.MeshStandardMaterial({
+    color: 0x0d0d0d,
+    metalness: 0.1,
+    roughness: 0.8
+  });
+  const glowMat = new THREE.MeshBasicMaterial({
+    color: TEAM_COLORS[myTeam] || 0xc9a96e
+  });
+
+  // Base grip (common to all)
+  const gripGeo = new THREE.BoxGeometry(0.04, 0.1, 0.04);
+  const grip = new THREE.Mesh(gripGeo, gripMat);
+  grip.position.set(0, -0.05, 0);
+  grip.rotation.x = -Math.PI / 8;
+  gunGroup.add(grip);
+
+  if (weaponType === 'pistol') {
+    // Pistol Slide
+    const slideGeo = new THREE.BoxGeometry(0.04, 0.05, 0.18);
+    const slide = new THREE.Mesh(slideGeo, metalMat);
+    slide.position.set(0, 0.02, -0.04);
+    gunGroup.add(slide);
+
+    // Barrel
+    const barrelGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.16, 8);
+    const barrel = new THREE.Mesh(barrelGeo, metalMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.02, -0.06);
+    gunGroup.add(barrel);
+  } 
+  else if (weaponType === 'rifle') {
+    // Rifle body
+    const bodyGeo = new THREE.BoxGeometry(0.05, 0.06, 0.35);
+    const body = new THREE.Mesh(bodyGeo, metalMat);
+    body.position.set(0, 0.02, -0.1);
+    gunGroup.add(body);
+
+    // Long Barrel
+    const barrelGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.3, 8);
+    const barrel = new THREE.Mesh(barrelGeo, metalMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.02, -0.35);
+    gunGroup.add(barrel);
+
+    // Magazine
+    const magGeo = new THREE.BoxGeometry(0.035, 0.14, 0.06);
+    const mag = new THREE.Mesh(magGeo, gripMat);
+    mag.position.set(0, -0.08, -0.12);
+    mag.rotation.x = -Math.PI / 6;
+    gunGroup.add(mag);
+
+    // Scope/Rail
+    const scopeGeo = new THREE.BoxGeometry(0.02, 0.02, 0.15);
+    const scope = new THREE.Mesh(scopeGeo, gripMat);
+    scope.position.set(0, 0.06, -0.1);
+    gunGroup.add(scope);
+  } 
+  else if (weaponType === 'shotgun') {
+    // Thick receiver
+    const receiverGeo = new THREE.BoxGeometry(0.06, 0.07, 0.28);
+    const receiver = new THREE.Mesh(receiverGeo, metalMat);
+    receiver.position.set(0, 0.02, -0.08);
+    gunGroup.add(receiver);
+
+    // Double barrels
+    const barrelGeo = new THREE.CylinderGeometry(0.018, 0.018, 0.32, 8);
+    
+    const barrelLeft = new THREE.Mesh(barrelGeo, metalMat);
+    barrelLeft.rotation.x = Math.PI / 2;
+    barrelLeft.position.set(-0.012, 0.025, -0.28);
+    gunGroup.add(barrelLeft);
+
+    const barrelRight = new THREE.Mesh(barrelGeo, metalMat);
+    barrelRight.rotation.x = Math.PI / 2;
+    barrelRight.position.set(0.012, 0.025, -0.28);
+    gunGroup.add(barrelRight);
+
+    // Pump action slide
+    const slideGeo = new THREE.BoxGeometry(0.065, 0.045, 0.12);
+    const slide = new THREE.Mesh(slideGeo, gripMat);
+    slide.position.set(0, -0.015, -0.2);
+    gunGroup.add(slide);
+  } 
+  else if (weaponType === 'sniper') {
+    // Sniper body
+    const bodyGeo = new THREE.BoxGeometry(0.04, 0.06, 0.4);
+    const body = new THREE.Mesh(bodyGeo, metalMat);
+    body.position.set(0, 0.02, -0.12);
+    gunGroup.add(body);
+
+    // Very Long Thin Barrel
+    const barrelGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.45, 8);
+    const barrel = new THREE.Mesh(barrelGeo, metalMat);
+    barrel.rotation.x = Math.PI / 2;
+    barrel.position.set(0, 0.02, -0.48);
+    gunGroup.add(barrel);
+
+    // Muzzle brake
+    const brakeGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.06, 8);
+    const brake = new THREE.Mesh(brakeGeo, metalMat);
+    brake.rotation.x = Math.PI / 2;
+    brake.position.set(0, 0.02, -0.72);
+    gunGroup.add(brake);
+
+    // Large Scope
+    const scopeBodyGeo = new THREE.CylinderGeometry(0.022, 0.022, 0.18, 12);
+    const scopeBody = new THREE.Mesh(scopeBodyGeo, gripMat);
+    scopeBody.rotation.x = Math.PI / 2;
+    scopeBody.position.set(0, 0.07, -0.15);
+    gunGroup.add(scopeBody);
+
+    const scopeLensGeo = new THREE.CylinderGeometry(0.025, 0.025, 0.01, 12);
+    const scopeLens = new THREE.Mesh(scopeLensGeo, glowMat);
+    scopeLens.rotation.x = Math.PI / 2;
+    scopeLens.position.set(0, 0.07, -0.241);
+    gunGroup.add(scopeLens);
+
+    // Scope Mounts
+    const mountGeo = new THREE.BoxGeometry(0.01, 0.03, 0.02);
+    const mountFront = new THREE.Mesh(mountGeo, gripMat);
+    mountFront.position.set(0, 0.045, -0.09);
+    gunGroup.add(mountFront);
+    
+    const mountBack = new THREE.Mesh(mountGeo, gripMat);
+    mountBack.position.set(0, 0.045, -0.21);
+    gunGroup.add(mountBack);
+  }
+
+  // Neon light strip on side of weapon for aesthetic glow
+  const stripGeo = new THREE.BoxGeometry(0.002, 0.01, 0.1);
+  const stripLeft = new THREE.Mesh(stripGeo, glowMat);
+  stripLeft.position.set(-0.021, 0.02, -0.08);
+  gunGroup.add(stripLeft);
+
+  const stripRight = new THREE.Mesh(stripGeo, glowMat);
+  stripRight.position.set(0.021, 0.02, -0.08);
+  gunGroup.add(stripRight);
+
+  camera.add(gunGroup);
+}
+
 // ─── Mobile Detection ──────────────────────────────
 const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1);
 let mobileActive = false;
@@ -1543,14 +1723,6 @@ function animate() {
 init();
 
 // ─── Multiplayer System ────────────────────────────
-const otherPlayers = new Map(); // id → { mesh, nameSprite, targetPos, targetRot }
-let socket = null;
-let myId = null;
-let myColor = '#c9a96e';
-let myBaseIndex;
-let bases = [];
-let lastSendTime = 0;
-const SEND_INTERVAL = 30; // ms between position broadcasts
 
 function createBaseVisuals() {
   if (!bases) return;
@@ -2155,12 +2327,6 @@ function initMultiplayer() {
     setTimeout(() => item.remove(), 4000);
   });
 }
-
-let isDead = false;
-let ammo = 15;
-let isReloading = false;
-let isCarrying = false;
-let isSprinting = false;
 
 window.addEventListener('mousedown', (e) => {
   if (!controls || !controls.isLocked || isDead) return;

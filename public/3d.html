@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sanal Tur — Fırça İzleri Sergisi</title>
-  <meta name="description" content="Fuat Sezgin Fen Lisesi resim sergisini 3D sanal turla keşfedin." />
+  <title>Museum Heist 3D</title>
+  <meta name="description" content="Çok oyunculu 3D Heist FPS oyunu." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
@@ -315,6 +315,21 @@
     }
     #respawn-screen h1 { font-size: 4rem; margin-bottom: 20px; }
     #respawn-screen p { font-size: 1.2rem; color: #ccc; }
+
+    /* Mini-Map Radar style */
+    #mini-map-container {
+      position: fixed; top: 60px; left: 20px; z-index: 35;
+      width: 130px; height: 130px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: rgba(12,11,13,0.7);
+      box-shadow: 0 0 15px rgba(0,0,0,0.6);
+      overflow: hidden;
+      backdrop-filter: blur(4px);
+      display: none; /* Shown after starting */
+    }
+    #mini-map {
+      display: block;
+    }
   </style>
 </head>
 <body>
@@ -339,6 +354,34 @@
 
   <!-- Online Count -->
   <div id="online-count"><span class="online-dot"></span><span id="online-num">1</span> çevrimiçi</div>
+
+  <!-- Mini-map Radar -->
+  <div id="mini-map-container">
+    <canvas id="mini-map" width="130" height="130"></canvas>
+  </div>
+
+  <!-- Team Scores HUD -->
+  <div id="team-scores-hud" style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 35; display: flex; gap: 20px; background: rgba(12,11,13,0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 6px 20px; font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: bold; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.5); backdrop-filter: blur(8px);">
+    <span style="color: #ef4444;">Kırmızı: <span id="team-score-0">0</span></span>
+    <span style="color: #3b82f6;">Mavi: <span id="team-score-1">0</span></span>
+    <span style="color: #10b981;">Yeşil: <span id="team-score-2">0</span></span>
+    <span style="color: #f59e0b;">Sarı: <span id="team-score-3">0</span></span>
+  </div>
+
+  <!-- Sniper Scope Overlay -->
+  <div id="sniper-scope" style="display:none; position: fixed; inset: 0; z-index: 15; pointer-events: none;">
+    <div style="position: absolute; inset: 0; background: radial-gradient(circle, transparent 20%, #000 30%);"></div>
+    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: rgba(0,255,0,0.4); transform: translateY(-50%);"></div>
+    <div style="position: absolute; left: 50%; top: 0; bottom: 0; width: 1px; background: rgba(0,255,0,0.4); transform: translateX(-50%);"></div>
+  </div>
+
+  <!-- Dash Cooldown HUD -->
+  <div id="dash-indicator" style="position: fixed; bottom: 30px; left: 290px; z-index: 35; display: none; align-items: center; gap: 8px; font-family: 'Inter', sans-serif; font-size: 0.75rem; color: rgba(255,255,255,0.6); background: rgba(12,11,13,0.7); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(8px);">
+    <span>DASH [SPACE]:</span>
+    <div style="width: 60px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden;">
+      <div id="dash-cooldown-fill" style="width: 100%; height: 100%; background: #c9a96e; transition: width 0.1s linear;"></div>
+    </div>
+  </div>
 
   <!-- FPS HUD Elements -->
   <div id="health-bar-container"><div id="health-bar-fill"></div></div>

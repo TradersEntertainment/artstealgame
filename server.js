@@ -513,27 +513,131 @@ app.get('/api/visitors', authMiddleware, (req, res) => {
 const galleryNsp = io.of('/gallery');
 const players = new Map();
 const stolenPaintings = new Set();
+const activePowerUps = new Set([0, 1, 2, 3]); // Synced power-ups (0, 1: Health; 2, 3: Speed)
 
-const AVATAR_COLORS = [
-  '#c9a96e', '#6ec9a9', '#a96ec9', '#c96e6e',
-  '#6e8fc9', '#c9c16e', '#6ec9c9', '#c96eaa',
-];
+const TEAM_COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b']; // Red, Blue, Green, Yellow
 
 const BASES = [
-  { x: -18, y: 1.65, z: -18 },
-  { x: 18, y: 1.65, z: 18 },
-  { x: -18, y: 1.65, z: 18 },
-  { x: 18, y: 1.65, z: -18 }
+  { x: -30, y: 1.65, z: -30 }, // Red Base (Northwest)
+  { x: 30, y: 1.65, z: 30 },   // Blue Base (Southeast)
+  { x: -30, y: 1.65, z: 30 },  // Green Base (Southwest)
+  { x: 30, y: 1.65, z: -30 }   // Yellow Base (Northeast)
 ];
 
+const teamScores = [0, 0, 0, 0]; // Red, Blue, Green, Yellow team scores
+
+// AI Guard Drone State
+let guardDrone = {
+  x: 0,
+  z: 0,
+  y: 3.0,
+  targetX: 0,
+  targetZ: 0,
+  health: 100,
+  lastShotTime: 0
+};
+
+// AI Guard Drone patrol loop
+setInterval(() => {
+  // 1. Move drone
+  const dx = guardDrone.targetX - guardDrone.x;
+  const dz = guardDrone.targetZ - guardDrone.z;
+  const dist = Math.sqrt(dx * dx + dz * dz);
+  
+  if (dist < 1.0) {
+    // Pick new patrol target around the center atrium (X: [-15, 15], Z: [-15, 15])
+    guardDrone.targetX = (Math.random() - 0.5) * 30;
+    guardDrone.targetZ = (Math.random() - 0.5) * 30;
+  } else {
+    // Move towards target
+    const speed = 0.3; // units per tick (3m/s)
+    guardDrone.x += (dx / dist) * speed;
+    guardDrone.z += (dz / dist) * speed;
+  }
+  
+  // 2. Scan for players
+  let closestPlayer = null;
+  let minDist = 18.0; // detection radius: 18m
+  
+  players.forEach((p) => {
+    if (p.isDead) return;
+    const pdx = p.position.x - guardDrone.x;
+    const pdz = p.position.z - guardDrone.z;
+    const pdist = Math.sqrt(pdx * pdx + pdz * pdz);
+    if (pdist < minDist) {
+      minDist = pdist;
+      closestPlayer = p;
+    }
+  });
+  
+  // 3. Shoot closest player
+  if (closestPlayer) {
+    const now = Date.now();
+    if (now - guardDrone.lastShotTime > 1200) { // Shoot every 1.2s
+      guardDrone.lastShotTime = now;
+      
+      // Inflict damage (e.g. 10 HP)
+      if (Date.now() > closestPlayer.invincibleUntil) {
+        closestPlayer.health = Math.max(0, closestPlayer.health - 10);
+        
+        galleryNsp.emit('player-hit', { id: closestPlayer.id, health: closestPlayer.health });
+        galleryNsp.emit('guard-shoot', { targetX: closestPlayer.position.x, targetZ: closestPlayer.position.z });
+        
+        if (closestPlayer.health <= 0) {
+          closestPlayer.health = 0;
+          closestPlayer.isDead = true;
+          closestPlayer.deaths++;
+          
+          if (closestPlayer.carryingArtworkId) {
+            stolenPaintings.delete(closestPlayer.carryingArtworkId);
+            galleryNsp.emit('artwork-returned', closestPlayer.carryingArtworkId);
+            closestPlayer.carryingArtworkId = null;
+          }
+          
+          galleryNsp.emit('player-died', {
+            id: closestPlayer.id,
+            killerId: 'guard',
+            killerName: '🤖 MUHAFIZ DRON',
+            victimName: closestPlayer.name,
+            killerKills: 0,
+            victimDeaths: closestPlayer.deaths
+          });
+          
+          // Auto respawn after 5 seconds
+          const targetId = closestPlayer.id;
+          setTimeout(() => {
+            if (players.has(targetId)) {
+              const tp = players.get(targetId);
+              tp.health = 100;
+              tp.isDead = false;
+              tp.invincibleUntil = Date.now() + 3000;
+              tp.position = { ...BASES[tp.baseIndex] };
+              galleryNsp.emit('player-respawned', tp);
+            }
+          }, 5000);
+        }
+      }
+    }
+  }
+  
+  // Broadcast drone state
+  galleryNsp.emit('guard-sync', {
+    x: guardDrone.x,
+    y: guardDrone.y,
+    z: guardDrone.z,
+    health: guardDrone.health,
+    hasTarget: (closestPlayer !== null)
+  });
+}, 100);
+
 galleryNsp.on('connection', (socket) => {
-  const color = AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)];
   const joinedAt = new Date().toISOString();
-  const baseIndex = Math.floor(Math.random() * BASES.length);
+  // Auto balance team on connect
+  const baseIndex = players.size % 4; 
   const playerData = {
     id: socket.id,
     name: 'Ziyaretçi',
-    color,
+    color: TEAM_COLORS[baseIndex],
     baseIndex,
     position: { ...BASES[baseIndex] },
     rotation: { x: 0, y: 0 },
@@ -543,7 +647,8 @@ galleryNsp.on('connection', (socket) => {
     deaths: 0,
     isDead: false,
     invincibleUntil: Date.now() + 3000,
-    carryingArtworkId: null
+    carryingArtworkId: null,
+    weapon: 'pistol'
   };
 
   // Send existing players to the new player
@@ -552,16 +657,28 @@ galleryNsp.on('connection', (socket) => {
   socket.emit('init', { 
     id: socket.id, 
     players: existingPlayers, 
-    color, 
+    color: playerData.color, 
     stolenPaintings: Array.from(stolenPaintings),
     myBaseIndex: baseIndex,
-    bases: BASES
+    bases: BASES,
+    teamScores,
+    activePowerUps: Array.from(activePowerUps)
   });
 
-  // Set name
-  socket.on('set-name', (name) => {
-    playerData.name = (name || 'Ziyaretçi').substring(0, 20);
+  // Set Player Info (team, weapon, name)
+  socket.on('set-player-info', (data) => {
+    const name = (data.name || 'Ziyaretçi').substring(0, 20);
+    const team = data.team !== undefined ? Math.min(3, Math.max(0, parseInt(data.team))) : 0;
+    const weapon = data.weapon || 'pistol';
+    
+    playerData.name = name;
+    playerData.baseIndex = team;
+    playerData.color = TEAM_COLORS[team];
+    playerData.weapon = weapon;
+    playerData.position = { ...BASES[team] };
+    
     players.set(socket.id, playerData);
+
     // Log visitor
     const visitors = readVisitors();
     visitors.push({
@@ -571,8 +688,22 @@ galleryNsp.on('connection', (socket) => {
       leftAt: null,
     });
     writeVisitors(visitors);
+    
+    // Broadcast info back to player to reset spawn
+    socket.emit('player-info-applied', {
+      myBaseIndex: team,
+      color: playerData.color,
+      position: playerData.position
+    });
+
     // Broadcast new player joined
     socket.broadcast.emit('player-joined', playerData);
+  });
+
+  // Legacy set-name fallback
+  socket.on('set-name', (name) => {
+    playerData.name = (name || 'Ziyaretçi').substring(0, 20);
+    players.set(socket.id, playerData);
   });
 
   // Position update
@@ -593,14 +724,29 @@ galleryNsp.on('connection', (socket) => {
   socket.on('shoot', (data) => {
     const targetId = typeof data === 'string' ? data : data.targetId;
     const isHeadshot = typeof data === 'object' && data.isHeadshot;
+    const damage = typeof data === 'object' && data.damage ? data.damage : (isHeadshot ? 50 : 25);
     
     const p = players.get(socket.id);
+    if (!p || p.isDead) return;
+    
+    if (targetId === 'guard') {
+      guardDrone.health -= damage;
+      if (guardDrone.health <= 0) {
+        guardDrone.health = 100; // Reset
+        guardDrone.x = 0; // Respawn at center
+        guardDrone.z = 0;
+        galleryNsp.emit('guard-destroyed', { killerName: p.name });
+        p.score += 2; // Give score bonus for destroying drone
+        galleryNsp.emit('player-score-updated', { id: p.id, score: p.score });
+      }
+      return;
+    }
+
     const target = players.get(targetId);
-    if (!p || p.isDead || !target || target.isDead) return;
+    if (!target || target.isDead) return;
     if (Date.now() < target.invincibleUntil) return; // Spawn protection
 
-    const damage = isHeadshot ? 50 : 25;
-    target.health -= damage;
+    target.health = Math.min(100, target.health - damage);
     if (target.health <= 0) {
       target.health = 0;
       target.isDead = true;
@@ -638,6 +784,20 @@ galleryNsp.on('connection', (socket) => {
     galleryNsp.emit('player-hit', { id: targetId, health: target.health });
   });
 
+  // Pickup collected
+  socket.on('pickup-collected', (id) => {
+    if (activePowerUps.has(id)) {
+      activePowerUps.delete(id);
+      galleryNsp.emit('pickup-collected', id);
+      
+      // Respawn after 15 seconds
+      setTimeout(() => {
+        activePowerUps.add(id);
+        galleryNsp.emit('pickup-respawned', id);
+      }, 15000);
+    }
+  });
+
   // Steal painting event
   socket.on('steal-painting', (artworkId) => {
     const p = players.get(socket.id);
@@ -658,13 +818,16 @@ galleryNsp.on('connection', (socket) => {
     const base = BASES[p.baseIndex];
     const dx = p.position.x - base.x;
     const dz = p.position.z - base.z;
-    if (dx*dx + dz*dz < 30) {
+    if (dx*dx + dz*dz < 36) { // inside 6m radius of the base
       p.score++;
+      teamScores[p.baseIndex]++; // Increase team score
+      
       galleryNsp.emit('painting-deposited', { 
         playerId: socket.id, 
         newScore: p.score, 
         artworkId: p.carryingArtworkId 
       });
+      galleryNsp.emit('team-scores-updated', teamScores);
       p.carryingArtworkId = null;
     }
   });
@@ -792,7 +955,7 @@ setInterval(() => {
 
 // ─── Start ────────────────────────────────────────
 server.listen(PORT, () => {
-  console.log(`\n🎨 Fırça İzleri Sergisi`);
+  console.log(`\n🎨 MUSEUM HEIST`);
   console.log(`   Sunucu çalışıyor: http://localhost:${PORT}`);
   console.log(`   Admin paneli:     http://localhost:${PORT}/admin.html`);
   console.log(`   3D Sanal Tur:     http://localhost:${PORT}/3d.html`);

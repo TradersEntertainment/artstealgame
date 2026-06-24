@@ -146,6 +146,83 @@
       height: 20px;
       color: var(--accent);
     }
+    .team-container {
+      margin-top: 1.5rem;
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+    .team-container label, .weapon-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+    }
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.5rem;
+    }
+    .team-btn {
+      background: rgba(0,0,0,0.6);
+      border: 2px solid rgba(255,255,255,0.1);
+      color: #aaa;
+      padding: 0.6rem 0.2rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .team-btn:hover {
+      color: white;
+      border-color: rgba(255,255,255,0.2);
+    }
+    .team-btn.team-0.selected { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.05); }
+    .team-btn.team-1.selected { border-color: #3b82f6; color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.05); }
+    .team-btn.team-2.selected { border-color: #10b981; color: #10b981; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.05); }
+    .team-btn.team-3.selected { border-color: #f59e0b; color: #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.05); }
+
+    .weapon-container {
+      margin-bottom: 2rem;
+      text-align: left;
+    }
+    .weapon-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.6rem;
+    }
+    .weapon-card {
+      background: rgba(0,0,0,0.6);
+      border: 2px solid rgba(255,255,255,0.1);
+      padding: 0.6rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: left;
+    }
+    .weapon-card:hover {
+      border-color: rgba(255,255,255,0.3);
+    }
+    .weapon-card.selected {
+      border-color: var(--accent);
+      box-shadow: 0 0 12px rgba(201, 169, 110, 0.3);
+      background: rgba(201, 169, 110, 0.05);
+    }
+    .weapon-name {
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-bottom: 0.2rem;
+      color: #fff;
+    }
+    .weapon-desc {
+      font-size: 0.65rem;
+      color: #777;
+      line-height: 1.2;
+    }
   </style>
 </head>
 <body>
@@ -159,6 +236,39 @@
         <label for="player-name">Kod Adı</label>
         <input type="text" id="player-name" class="name-input" placeholder="Hırsız_01" maxlength="16" autocomplete="off">
       </div>
+
+      <div class="team-container">
+        <label>TAKIM SEÇ</label>
+        <div class="team-grid">
+          <button class="team-btn team-0 selected" onclick="selectTeam(0)">Kırmızı</button>
+          <button class="team-btn team-1" onclick="selectTeam(1)">Mavi</button>
+          <button class="team-btn team-2" onclick="selectTeam(2)">Yeşil</button>
+          <button class="team-btn team-3" onclick="selectTeam(3)">Sarı</button>
+        </div>
+      </div>
+
+      <div class="weapon-container">
+        <label>SİLAH SEÇ</label>
+        <div class="weapon-grid">
+          <div class="weapon-card selected" id="w-pistol" onclick="selectWeapon('pistol')">
+            <div class="weapon-name">Tabanca</div>
+            <div class="weapon-desc">Yarı-Oto, 15 mermi, dengeli hasar.</div>
+          </div>
+          <div class="weapon-card" id="w-rifle" onclick="selectWeapon('rifle')">
+            <div class="weapon-name">Tüfek</div>
+            <div class="weapon-desc">Tam Otomatik, 30 mermi, hızlı atış.</div>
+          </div>
+          <div class="weapon-card" id="w-shotgun" onclick="selectWeapon('shotgun')">
+            <div class="weapon-name">Pompalı</div>
+            <div class="weapon-desc">5 saçma yayılımı, yakın mesafe.</div>
+          </div>
+          <div class="weapon-card" id="w-sniper" onclick="selectWeapon('sniper')">
+            <div class="weapon-name">Sniper</div>
+            <div class="weapon-desc">Dürbünlü (Sağ tık), 5 mermi, yüksek hasar.</div>
+          </div>
+        </div>
+      </div>
+      
       <button class="play-btn" onclick="startGame()">OYUNA GİR</button>
     </div>
 
@@ -179,12 +289,31 @@
   </div>
 
   <script>
+    let selectedTeam = 0;
+    let selectedWeapon = 'pistol';
+
+    function selectTeam(id) {
+      selectedTeam = id;
+      const btns = document.querySelectorAll('.team-btn');
+      btns.forEach((btn, idx) => {
+        btn.classList.toggle('selected', idx === id);
+      });
+    }
+
+    function selectWeapon(type) {
+      selectedWeapon = type;
+      const cards = document.querySelectorAll('.weapon-card');
+      cards.forEach(card => {
+        card.classList.toggle('selected', card.id === 'w-' + type);
+      });
+    }
+
     function startGame() {
       const nameInput = document.getElementById('player-name').value.trim();
       let url = '3d.html';
-      if (nameInput) {
-        url += '?name=' + encodeURIComponent(nameInput);
-      }
+      url += '?name=' + encodeURIComponent(nameInput || 'Hırsız_' + Math.floor(Math.random()*900 + 100));
+      url += '&team=' + selectedTeam;
+      url += '&weapon=' + selectedWeapon;
       window.location.href = url;
     }
 
